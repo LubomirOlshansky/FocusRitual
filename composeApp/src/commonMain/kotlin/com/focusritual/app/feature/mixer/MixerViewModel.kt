@@ -15,6 +15,32 @@ class MixerViewModel : ViewModel() {
             MixerIntent.TogglePlayback -> {
                 _uiState.update { it.copy(isPlaying = !it.isPlaying) }
             }
+            is MixerIntent.ToggleSound -> {
+                _uiState.update { state ->
+                    state.copy(
+                        sounds = state.sounds.map { sound ->
+                            if (sound.id == intent.soundId) {
+                                sound.copy(isEnabled = !sound.isEnabled)
+                            } else {
+                                sound
+                            }
+                        }
+                    )
+                }
+            }
+            is MixerIntent.AdjustVolume -> {
+                _uiState.update { state ->
+                    state.copy(
+                        sounds = state.sounds.map { sound ->
+                            if (sound.id == intent.soundId) {
+                                sound.copy(volume = intent.volume.coerceIn(0f, 1f))
+                            } else {
+                                sound
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }

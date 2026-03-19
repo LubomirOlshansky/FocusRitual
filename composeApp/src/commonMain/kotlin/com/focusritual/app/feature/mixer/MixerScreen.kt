@@ -3,9 +3,14 @@ package com.focusritual.app.feature.mixer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.PlayButton
+import com.focusritual.app.core.designsystem.component.SoundTile
 
 @Composable
 fun MixerScreen(viewModel: MixerViewModel = viewModel { MixerViewModel() }) {
@@ -36,29 +42,50 @@ private fun MixerScreenContent(
 ) {
     Box(Modifier.fillMaxSize()) {
         ImmersiveBackground()
-        Column(
+        LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+            contentPadding = PaddingValues(bottom = 32.dp),
         ) {
-            PlayButton(
-                isPlaying = uiState.isPlaying,
-                onClick = { onIntent(MixerIntent.TogglePlayback) },
-            )
-            Spacer(Modifier.height(32.dp))
-            Text(
-                text = uiState.sceneName,
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                letterSpacing = 4.sp,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = uiState.sceneSubtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 6.sp,
-            )
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 120.dp, bottom = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    PlayButton(
+                        isPlaying = uiState.isPlaying,
+                        onClick = { onIntent(MixerIntent.TogglePlayback) },
+                    )
+                    Spacer(Modifier.height(32.dp))
+                    Text(
+                        text = uiState.sceneName,
+                        style = MaterialTheme.typography.displayLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        letterSpacing = 4.sp,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = uiState.sceneSubtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 6.sp,
+                    )
+                }
+            }
+            items(
+                items = uiState.sounds,
+                key = { it.id },
+            ) { sound ->
+                SoundTile(
+                    state = sound,
+                    onToggle = { onIntent(MixerIntent.ToggleSound(sound.id)) },
+                    onVolumeChange = { volume -> onIntent(MixerIntent.AdjustVolume(sound.id, volume)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 6.dp),
+                )
+            }
         }
     }
 }
