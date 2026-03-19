@@ -64,11 +64,21 @@ com/focusritual/app/
 Deleted: Greeting.kt (template boilerplate, removed)
 ```
 
+## Implemented Core Modules
+
+```
+core/audio/
+├── AudioPlayer.kt              ← expect class: play(ByteArray), stop(), setVolume(), release()
+├── SoundResources.kt           ← Maps sound IDs → resource paths
+└── SoundMixer.kt               ← Orchestrates multiple AudioPlayers, syncs with UI state
+```
+
+Platform actuals:
+- `androidMain/core/audio/AndroidAudioContext.kt` — Stores Application context
+- `androidMain/core/audio/AudioPlayer.android.kt` — actual: MediaPlayer + temp file
+- `iosMain/core/audio/AudioPlayer.ios.kt` — actual: AVAudioPlayer
+
 ## Future Feature Folders (not yet created)
-- `feature/timer/` — Pomodoro timer screen
-- `feature/settings/` — App settings
-- `feature/presets/` — Preset management
-- `core/audio/` — expect/actual AudioPlayer abstraction
 - `core/data/` — Persistence layer (DataStore/Room)
 
 ## Architecture: MVI Pattern

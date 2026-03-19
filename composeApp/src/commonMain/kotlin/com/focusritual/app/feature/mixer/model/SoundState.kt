@@ -9,7 +9,7 @@ data class SoundState(
 )
 
 enum class SoundIcon {
-    Rain, Thunder, Wind, Forest, Stream, Cafe, Fireplace, BrownNoise
+    Rain, Thunder, Wind, Forest, Stream, Cafe, Fireplace, BrownNoise, Waves
 }
 
 fun defaultSounds(): List<SoundState> = listOf(
@@ -21,4 +21,5 @@ fun defaultSounds(): List<SoundState> = listOf(
     SoundState(id = "cafe", name = "Cafe", icon = SoundIcon.Cafe),
     SoundState(id = "fireplace", name = "Fireplace", icon = SoundIcon.Fireplace),
     SoundState(id = "brown_noise", name = "Brown Noise", icon = SoundIcon.BrownNoise),
+    SoundState(id = "waves", name = "Waves", icon = SoundIcon.Waves),
 )
