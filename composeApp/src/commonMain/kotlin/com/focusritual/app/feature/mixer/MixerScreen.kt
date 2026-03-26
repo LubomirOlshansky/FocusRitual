@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,19 +51,20 @@ private fun MixerScreenContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 120.dp, bottom = 40.dp),
+                        .padding(top = 48.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     PlayButton(
                         isPlaying = uiState.isPlaying,
                         onClick = { onIntent(MixerIntent.TogglePlayback) },
                     )
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = uiState.sceneName,
                         style = MaterialTheme.typography.displayLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         letterSpacing = 4.sp,
+                        textAlign = TextAlign.Center,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -70,6 +72,7 @@ private fun MixerScreenContent(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 6.sp,
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
