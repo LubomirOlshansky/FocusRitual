@@ -1,11 +1,13 @@
 package com.focusritual.app.core.audio
 
+import android.content.Intent
 import android.media.MediaPlayer
 import java.io.File
 
 actual class AudioPlayer actual constructor() {
     private var mediaPlayer: MediaPlayer? = null
     private var tempFile: File? = null
+    private var serviceStarted = false
 
     actual fun play(data: ByteArray, loop: Boolean) {
         release()
@@ -20,6 +22,9 @@ actual class AudioPlayer actual constructor() {
             prepare()
             start()
         }
+
+        onPlayerStarted()
+        serviceStarted = true
     }
 
     actual fun stop() {
@@ -45,8 +50,32 @@ actual class AudioPlayer actual constructor() {
         mediaPlayer = null
         tempFile?.delete()
         tempFile = null
+
+        if (serviceStarted) {
+            serviceStarted = false
+            onPlayerReleased()
+        }
     }
 
     actual val isPlaying: Boolean
         get() = mediaPlayer?.isPlaying == true
+
+    companion object {
+        private var activeCount = 0
+
+        private fun onPlayerStarted() {
+            val context = AndroidAudioContext.appContext
+            if (activeCount++ == 0) {
+                context.startForegroundService(Intent(context, FocusAudioService::class.java))
+            }
+        }
+
+        private fun onPlayerReleased() {
+            if (--activeCount <= 0) {
+                activeCount = 0
+                val context = AndroidAudioContext.appContext
+                context.stopService(Intent(context, FocusAudioService::class.java))
+            }
+        }
+    }
 }

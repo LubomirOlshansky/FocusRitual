@@ -44,7 +44,7 @@ private fun SoundIcon.toImageVector(): ImageVector = when (this) {
     SoundIcon.Cafe -> Icons.Filled.LocalCafe
     SoundIcon.Fireplace -> Icons.Filled.Fireplace
     SoundIcon.BrownNoise -> Icons.Filled.GraphicEq
-    SoundIcon.Waves -> Icons.Default.WaterDrop
+    SoundIcon.Waves -> Icons.Filled.Water
 }
 
 @Composable

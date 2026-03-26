@@ -5,7 +5,7 @@ import com.focusritual.app.feature.mixer.model.defaultSounds
 
 data class MixerUiState(
     val isPlaying: Boolean = false,
-    val sceneName: String = "Focus through sound",
+    val sceneName: String = "Midnight Rain",
     val sceneSubtitle: String = "AETHER IMMERSION",
     val sounds: List<SoundState> = defaultSounds(),
 )
