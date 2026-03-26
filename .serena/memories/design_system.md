@@ -57,7 +57,12 @@ Screen = canvas of light and shadow, not a collection of boxes.
 
 ## Component Patterns
 - **PlayButton:** ~96dp circle, glass background, play/pause Material icon, ambient shadow
-- **Sound Tiles (future):** Semi-transparent surfaceContainerHigh 80% opacity, xl corners (1.5rem/24dp)
-- **Volume Sliders (future):** Wide 1rem track, gradient progress, large circular thumb
+- **Sound Tiles:** Semi-transparent surfaceContainerHigh 80% opacity, xl corners (24dp), toggle + volume
+- **ImmersiveBackground:** Dark forest image (`Res.drawable.background`) + vertical gradient overlay (transparent → 0.6 → 0.92 → opaque)
+- **Breathing Circle:** 280dp main circle + 320dp outer ring, scale animation (0.97↔1.03), phase-aware speed (4s focus / 6s break)
+- **Session Timer:** 64sp ExtraLight time display, Crossfade digit transitions, centered in breathing circle
+- **Progress Dots:** Horizontal row of 32×2dp bars, animated fill by cycle progress
+- **Bottom Floating Pill:** RoundedCornerShape(999dp), surfaceBright 60%, skip + stop controls
+- **Ghost Borders:** outline_variant at low alpha only, never solid
 - **Lists:** NO divider lines, separate with 16dp spacing
 - **Spacing:** Use generous void — 112dp+ page margins for cinematic scale

@@ -10,22 +10,23 @@ class SoundMixer {
         loadedData[soundId] = data
     }
 
-    fun syncState(sounds: List<SoundState>, isPlaying: Boolean) {
+    fun syncState(sounds: List<SoundState>, isPlaying: Boolean, masterVolume: Float = 1f) {
         for (sound in sounds) {
             val data = loadedData[sound.id]
             val player = players[sound.id]
+            val effectiveVolume = sound.volume * masterVolume
 
             if (isPlaying && sound.isEnabled && data != null) {
                 if (player == null) {
                     val newPlayer = AudioPlayer()
                     players[sound.id] = newPlayer
                     newPlayer.play(data)
-                    newPlayer.setVolume(sound.volume)
+                    newPlayer.setVolume(effectiveVolume)
                 } else if (!player.isPlaying) {
                     player.play(data)
-                    player.setVolume(sound.volume)
+                    player.setVolume(effectiveVolume)
                 } else {
-                    player.setVolume(sound.volume)
+                    player.setVolume(effectiveVolume)
                 }
             } else {
                 player?.let {

@@ -21,6 +21,7 @@ fun FocusRitualTheme(content: @Composable () -> Unit) {
         surfaceContainerHighest = SurfaceContainerHighest,
         surfaceBright = SurfaceBright,
         outlineVariant = OutlineVariant,
+        outline = Outline,
         tertiary = Tertiary,
     )
     MaterialTheme(

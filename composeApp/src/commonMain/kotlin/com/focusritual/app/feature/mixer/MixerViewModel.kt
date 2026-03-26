@@ -7,6 +7,7 @@ import com.focusritual.app.core.audio.SoundResources
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import focusritual.composeapp.generated.resources.Res
@@ -16,14 +17,25 @@ class MixerViewModel : ViewModel() {
     val uiState: StateFlow<MixerUiState> = _uiState.asStateFlow()
 
     private val soundMixer = SoundMixer()
+    private val _sessionMasterVolume = MutableStateFlow<Float?>(null)
 
     init {
         loadSoundResources()
         viewModelScope.launch {
-            _uiState.collect { state ->
-                soundMixer.syncState(state.sounds, state.isPlaying)
+            combine(_uiState, _sessionMasterVolume) { state, sessionVolume ->
+                Triple(
+                    state.sounds,
+                    if (sessionVolume != null) sessionVolume > 0.01f else state.isPlaying,
+                    sessionVolume ?: 1f,
+                )
+            }.collect { (sounds, isPlaying, masterVolume) ->
+                soundMixer.syncState(sounds, isPlaying, masterVolume)
             }
         }
+    }
+
+    fun setSessionMasterVolume(volume: Float?) {
+        _sessionMasterVolume.value = volume
     }
 
     private fun loadSoundResources() {
