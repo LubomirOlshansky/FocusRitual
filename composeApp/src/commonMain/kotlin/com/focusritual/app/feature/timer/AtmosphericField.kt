@@ -36,6 +36,7 @@ private val DriftEasing = CubicBezierEasing(0.4f, 0.0f, 0.6f, 1.0f)
 internal fun AtmosphericField(
     phase: SessionPhase,
     isPaused: Boolean,
+    fadeFraction: Float = 1f,
     content: @Composable () -> Unit,
 ) {
     val infiniteTransition = rememberInfiniteTransition()
@@ -131,11 +132,11 @@ internal fun AtmosphericField(
     )
 
     // ── Derived values ──
-    val outerScale = 1f + b * 0.1f
-    val outerAlpha = (0.5f + b * 0.5f) * intensity
-    val circleScale = 1f + b * 0.05f
-    val glowAlpha = (0.15f + b * 0.10f) * intensity
-    val shadowAlpha = (0.06f + (1f - b) * 0.10f) * intensity
+    val outerScale = 1f + b * 0.1f * fadeFraction
+    val outerAlpha = (0.5f + b * 0.5f) * intensity * fadeFraction
+    val circleScale = 1f + b * 0.05f * fadeFraction
+    val glowAlpha = (0.15f + b * 0.10f) * intensity * fadeFraction
+    val shadowAlpha = (0.06f + (1f - b) * 0.10f) * intensity * fadeFraction
 
     Box(contentAlignment = Alignment.Center) {
         // Layer 1: Outer breathing pulse — large diffuse glow

@@ -24,8 +24,12 @@ import focusritual.composeapp.generated.resources.background
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-internal fun TimerBackground(phase: SessionPhase, isPaused: Boolean) {
-    val overlayAlpha by animateFloatAsState(
+internal fun TimerBackground(
+    phase: SessionPhase,
+    isPaused: Boolean,
+    darkenOverride: Float? = null,
+) {
+    val baseOverlayAlpha by animateFloatAsState(
         targetValue = when {
             phase == SessionPhase.Break -> 0.92f
             isPaused -> 0.90f
@@ -33,6 +37,13 @@ internal fun TimerBackground(phase: SessionPhase, isPaused: Boolean) {
         },
         animationSpec = tween(1500),
     )
+
+    // darkenOverride 0→1 pushes overlay toward fully opaque
+    val overlayAlpha = if (darkenOverride != null) {
+        baseOverlayAlpha + (1f - baseOverlayAlpha) * darkenOverride
+    } else {
+        baseOverlayAlpha
+    }
 
     Box(Modifier.fillMaxSize()) {
         Image(

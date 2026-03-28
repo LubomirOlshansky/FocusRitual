@@ -1,8 +1,11 @@
 package com.focusritual.app.feature.timer
 
+import com.focusritual.app.feature.session.SessionMode
+
 enum class SessionPhase { Focus, Break }
 
 data class ActiveSessionUiState(
+    val sessionMode: SessionMode = SessionMode.Focus,
     val phase: SessionPhase = SessionPhase.Focus,
     val remainingSeconds: Int = 0,
     val totalSeconds: Int = 0,
@@ -10,7 +13,10 @@ data class ActiveSessionUiState(
     val totalCycles: Int = 4,
     val isPaused: Boolean = false,
     val isCompleted: Boolean = false,
+    val isSleepFadingOut: Boolean = false,
 ) {
+    val isSleepMode: Boolean get() = sessionMode == SessionMode.Sleep
+
     val remainingFormatted: String
         get() {
             val minutes = remainingSeconds / 60
@@ -23,7 +29,10 @@ data class ActiveSessionUiState(
 
     val phaseLabel: String
         get() = when {
+            isSleepFadingOut -> "REST"
+            isCompleted && isSleepMode -> "REST"
             isCompleted -> "COMPLETE"
+            isSleepMode -> "SLEEP SESSION"
             phase == SessionPhase.Focus -> "FOCUS SESSION"
             else -> "BREAK"
         }

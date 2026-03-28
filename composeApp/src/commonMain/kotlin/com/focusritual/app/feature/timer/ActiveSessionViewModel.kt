@@ -3,6 +3,7 @@ package com.focusritual.app.feature.timer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.focusritual.app.feature.session.SessionConfig
+import com.focusritual.app.feature.session.SessionMode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,13 +13,37 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ActiveSessionViewModel(private val config: SessionConfig) : ViewModel() {
-    private val _uiState = MutableStateFlow(ActiveSessionUiState(totalCycles = config.totalCycles))
+    private val _uiState = MutableStateFlow(
+        ActiveSessionUiState(
+            sessionMode = config.mode,
+            totalCycles = config.totalCycles,
+        ),
+    )
     val uiState: StateFlow<ActiveSessionUiState> = _uiState.asStateFlow()
 
     private var timerJob: Job? = null
 
     init {
-        startPhase(SessionPhase.Focus, cycle = 1)
+        if (config.mode == SessionMode.Sleep) {
+            startSleepSession()
+        } else {
+            startPhase(SessionPhase.Focus, cycle = 1)
+        }
+    }
+
+    private fun startSleepSession() {
+        val totalSeconds = config.sleepDurationMinutes * 60
+        _uiState.update {
+            it.copy(
+                phase = SessionPhase.Focus,
+                remainingSeconds = totalSeconds,
+                totalSeconds = totalSeconds,
+                currentCycle = 1,
+                isPaused = false,
+                isCompleted = false,
+            )
+        }
+        startTimer()
     }
 
     private fun startPhase(phase: SessionPhase, cycle: Int) {
@@ -54,6 +79,11 @@ class ActiveSessionViewModel(private val config: SessionConfig) : ViewModel() {
 
     private fun onPhaseComplete() {
         val state = _uiState.value
+        if (state.isSleepMode) {
+            timerJob?.cancel()
+            _uiState.update { it.copy(isCompleted = true, isSleepFadingOut = true, remainingSeconds = 0) }
+            return
+        }
         when (state.phase) {
             SessionPhase.Focus -> {
                 if (config.breakMinutes > 0) {
