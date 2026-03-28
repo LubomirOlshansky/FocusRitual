@@ -33,6 +33,19 @@ class FocusSessionViewModel : ViewModel() {
                     it.copy(customSessions = (it.customSessions + intent.delta).coerceIn(1, 10))
                 }
             }
+            is FocusSessionIntent.AdjustSleepDuration -> {
+                _uiState.update { state ->
+                    val newDuration = (state.sleepDurationMinutes + intent.delta * 5).coerceIn(15, 480)
+                    val newFadeOut = state.sleepFadeOutMinutes.coerceAtMost(newDuration)
+                    state.copy(sleepDurationMinutes = newDuration, sleepFadeOutMinutes = newFadeOut)
+                }
+            }
+            is FocusSessionIntent.AdjustSleepFadeOut -> {
+                _uiState.update { state ->
+                    val newFadeOut = (state.sleepFadeOutMinutes + intent.delta * 5).coerceIn(0, state.sleepDurationMinutes)
+                    state.copy(sleepFadeOutMinutes = newFadeOut)
+                }
+            }
             FocusSessionIntent.StartSession -> { /* handled by navigation callback */ }
             FocusSessionIntent.Close -> { /* handled by navigation callback */ }
         }
@@ -44,9 +57,9 @@ class FocusSessionViewModel : ViewModel() {
             state.presets.find { it.id == id }
         }
         return if (preset != null) {
-            SessionConfig(preset.focusMinutes, preset.breakMinutes, preset.sessions)
+            SessionConfig(focusMinutes = preset.focusMinutes, breakMinutes = preset.breakMinutes, totalCycles = preset.sessions)
         } else {
-            SessionConfig(state.customFocusMinutes, state.customBreakMinutes, state.customSessions)
+            SessionConfig(focusMinutes = state.customFocusMinutes, breakMinutes = state.customBreakMinutes, totalCycles = state.customSessions)
         }
     }
 }

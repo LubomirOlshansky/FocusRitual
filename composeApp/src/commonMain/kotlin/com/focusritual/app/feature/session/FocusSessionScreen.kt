@@ -1,5 +1,6 @@
 package com.focusritual.app.feature.session
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -21,7 +22,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,12 +42,29 @@ fun FocusSessionScreen(
     viewModel: FocusSessionViewModel = viewModel { FocusSessionViewModel() },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var mode by remember { mutableStateOf(SessionMode.Focus) }
+
     FocusSessionScreenContent(
         uiState = uiState,
+        mode = mode,
+        onModeChange = { mode = it },
         onIntent = { intent ->
             when (intent) {
                 FocusSessionIntent.Close -> onClose()
-                FocusSessionIntent.StartSession -> onStartSession(viewModel.resolveConfig())
+                FocusSessionIntent.StartSession -> {
+                    val config = when (mode) {
+                        SessionMode.Focus -> viewModel.resolveConfig()
+                        SessionMode.Sleep -> SessionConfig(
+                            mode = SessionMode.Sleep,
+                            focusMinutes = 0,
+                            breakMinutes = 0,
+                            totalCycles = 1,
+                            sleepDurationMinutes = uiState.sleepDurationMinutes,
+                            sleepFadeOutMinutes = uiState.sleepFadeOutMinutes,
+                        )
+                    }
+                    onStartSession(config)
+                }
                 else -> viewModel.onIntent(intent)
             }
         },
@@ -54,6 +74,8 @@ fun FocusSessionScreen(
 @Composable
 private fun FocusSessionScreenContent(
     uiState: FocusSessionUiState,
+    mode: SessionMode,
+    onModeChange: (SessionMode) -> Unit,
     onIntent: (FocusSessionIntent) -> Unit,
 ) {
     Column(
@@ -71,7 +93,10 @@ private fun FocusSessionScreenContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "FOCUS SESSION",
+                text = when (mode) {
+                    SessionMode.Focus -> "FOCUS SESSION"
+                    SessionMode.Sleep -> "SLEEP SESSION"
+                },
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 2.sp,
@@ -89,36 +114,59 @@ private fun FocusSessionScreenContent(
             }
         }
 
-        // Scrollable content area
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(top = 8.dp),
-        ) {
-            // Preset radio buttons
-            uiState.presets.forEach { preset ->
-                val isSelected = uiState.selectedPresetId == preset.id
-                PresetRow(
-                    label = preset.label,
-                    isSelected = isSelected,
-                    onClick = { onIntent(FocusSessionIntent.SelectPreset(preset.id)) },
-                )
-                Spacer(Modifier.height(4.dp))
+        // Mode toggle
+        SessionModeToggle(
+            selectedMode = mode,
+            onModeChange = onModeChange,
+        )
+
+        // Mode content with crossfade animation
+        Crossfade(
+            targetState = mode,
+            animationSpec = tween(350),
+            modifier = Modifier.weight(1f),
+        ) { currentMode ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 8.dp),
+            ) {
+                when (currentMode) {
+                    SessionMode.Focus -> {
+                        // Preset radio buttons
+                        uiState.presets.forEach { preset ->
+                            val isSelected = uiState.selectedPresetId == preset.id
+                            PresetRow(
+                                label = preset.label,
+                                isSelected = isSelected,
+                                onClick = { onIntent(FocusSessionIntent.SelectPreset(preset.id)) },
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        // Custom expandable card
+                        CustomCard(
+                            isSelected = uiState.isCustomSelected,
+                            focusMinutes = uiState.customFocusMinutes,
+                            breakMinutes = uiState.customBreakMinutes,
+                            sessions = uiState.customSessions,
+                            onSelect = { onIntent(FocusSessionIntent.SelectCustom) },
+                            onIntent = onIntent,
+                        )
+                    }
+                    SessionMode.Sleep -> {
+                        SleepConfigurationCard(
+                            durationMinutes = uiState.sleepDurationMinutes,
+                            fadeOutMinutes = uiState.sleepFadeOutMinutes,
+                            onIntent = onIntent,
+                        )
+                    }
+                }
             }
-
-            Spacer(Modifier.height(4.dp))
-
-            // Custom expandable card
-            CustomCard(
-                isSelected = uiState.isCustomSelected,
-                focusMinutes = uiState.customFocusMinutes,
-                breakMinutes = uiState.customBreakMinutes,
-                sessions = uiState.customSessions,
-                onSelect = { onIntent(FocusSessionIntent.SelectCustom) },
-                onIntent = onIntent,
-            )
         }
 
         // Footer CTA
@@ -302,6 +350,7 @@ private fun StepperRow(
     label: String,
     value: Int,
     unit: String,
+    subtitle: String? = null,
     onDecrement: () -> Unit,
     onIncrement: () -> Unit,
 ) {
@@ -310,13 +359,22 @@ private fun StepperRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = MaterialTheme.colorScheme.outline,
-        )
+        Column {
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                )
+            }
+        }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -361,6 +419,95 @@ private fun StepperRow(
                     tint = MaterialTheme.colorScheme.outline,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SessionModeToggle(
+    selectedMode: SessionMode,
+    onModeChange: (SessionMode) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        SessionMode.entries.forEach { mode ->
+            val isSelected = mode == selectedMode
+            Text(
+                text = mode.name.uppercase(),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 1.5.sp,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onModeChange(mode) }
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SleepConfigurationCard(
+    durationMinutes: Int,
+    fadeOutMinutes: Int,
+    onIntent: (FocusSessionIntent) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.05f),
+                shape = RoundedCornerShape(16.dp),
+            ),
+    ) {
+        Text(
+            text = "SLEEP MODE",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.padding(start = 24.dp, top = 20.dp, end = 24.dp),
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            StepperRow(
+                label = "DURATION",
+                value = durationMinutes,
+                unit = "MIN",
+                onDecrement = { onIntent(FocusSessionIntent.AdjustSleepDuration(-1)) },
+                onIncrement = { onIntent(FocusSessionIntent.AdjustSleepDuration(1)) },
+            )
+            StepperRow(
+                label = "FADE OUT",
+                value = fadeOutMinutes,
+                unit = "MIN",
+                subtitle = "last part of session",
+                onDecrement = { onIntent(FocusSessionIntent.AdjustSleepFadeOut(-1)) },
+                onIncrement = { onIntent(FocusSessionIntent.AdjustSleepFadeOut(1)) },
+            )
         }
     }
 }
