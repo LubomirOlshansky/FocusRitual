@@ -1,6 +1,6 @@
 package com.focusritual.app.feature.about
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -35,6 +35,11 @@ import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material.icons.filled.Water
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -66,7 +71,7 @@ fun AboutSheet(onDismiss: () -> Unit) {
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         scrimColor = Color.Black.copy(alpha = 0.6f),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
@@ -81,9 +86,18 @@ fun AboutSheet(onDismiss: () -> Unit) {
             )
         },
     ) {
-        Crossfade(
+        AnimatedContent(
             targetState = showSoundCredits,
-            animationSpec = tween(300),
+            transitionSpec = {
+                if (targetState) {
+                    (slideInHorizontally { it / 3 } + fadeIn(tween(250)))
+                        .togetherWith(slideOutHorizontally { -it / 3 } + fadeOut(tween(150)))
+                } else {
+                    (slideInHorizontally { -it / 3 } + fadeIn(tween(250)))
+                        .togetherWith(slideOutHorizontally { it / 3 } + fadeOut(tween(150)))
+                }
+            },
+            label = "about_content",
         ) { creditsVisible ->
             if (!creditsVisible) {
                 AboutList(onShowSoundCredits = { showSoundCredits = true })
