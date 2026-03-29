@@ -67,10 +67,25 @@ class ActiveSessionViewModel(private val config: SessionConfig) : ViewModel() {
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
+            val fadeOutThreshold = if (config.mode == SessionMode.Sleep) {
+                config.sleepFadeOutMinutes * 60
+            } else {
+                0
+            }
+
             while (_uiState.value.remainingSeconds > 0) {
                 delay(1000L)
                 if (!_uiState.value.isPaused) {
-                    _uiState.update { it.copy(remainingSeconds = it.remainingSeconds - 1) }
+                    val newRemaining = _uiState.value.remainingSeconds - 1
+                    val shouldStartFade = config.mode == SessionMode.Sleep
+                        && newRemaining <= fadeOutThreshold
+                        && !_uiState.value.isSleepFadingOut
+                    _uiState.update {
+                        it.copy(
+                            remainingSeconds = newRemaining,
+                            isSleepFadingOut = it.isSleepFadingOut || shouldStartFade,
+                        )
+                    }
                 }
             }
             onPhaseComplete()

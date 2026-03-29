@@ -36,6 +36,7 @@ private val DriftEasing = CubicBezierEasing(0.4f, 0.0f, 0.6f, 1.0f)
 internal fun AtmosphericField(
     phase: SessionPhase,
     isPaused: Boolean,
+    isSleepMode: Boolean = false,
     fadeFraction: Float = 1f,
     content: @Composable () -> Unit,
 ) {
@@ -43,6 +44,7 @@ internal fun AtmosphericField(
 
     // ── Primary breath: main rhythm ──
     val primaryHalfCycle = when {
+        isSleepMode -> 6500
         isPaused -> 6000
         phase == SessionPhase.Focus -> 4800
         else -> 5800
@@ -59,6 +61,7 @@ internal fun AtmosphericField(
 
     // ── Secondary breath: slower cycle, organic variation ──
     val secondaryHalfCycle = when {
+        isSleepMode -> 10000
         isPaused -> 8500
         phase == SessionPhase.Focus -> 7200
         else -> 9000
@@ -79,6 +82,7 @@ internal fun AtmosphericField(
     // ── Phase intensity (smooth 2s transition) ──
     val intensity by animateFloatAsState(
         targetValue = when {
+            isSleepMode -> 0.45f
             isPaused -> 0.3f
             phase == SessionPhase.Focus -> 1.0f
             else -> 0.5f
@@ -95,6 +99,7 @@ internal fun AtmosphericField(
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = when {
+                    isSleepMode -> 20000
                     isPaused -> 18000
                     phase == SessionPhase.Focus -> 11000
                     else -> 15000
@@ -111,6 +116,7 @@ internal fun AtmosphericField(
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = when {
+                    isSleepMode -> 25000
                     isPaused -> 22000
                     phase == SessionPhase.Focus -> 14000
                     else -> 19000
@@ -124,6 +130,7 @@ internal fun AtmosphericField(
     // Drift visibility scales with phase (separate from breath intensity)
     val driftIntensity by animateFloatAsState(
         targetValue = when {
+            isSleepMode -> 0.25f
             isPaused -> 0.15f
             phase == SessionPhase.Focus -> 1.0f
             else -> 0.4f
@@ -132,10 +139,11 @@ internal fun AtmosphericField(
     )
 
     // ── Derived values ──
-    val outerScale = 1f + b * 0.1f * fadeFraction
+    val scaleMultiplier = if (isSleepMode) 0.6f else 1f
+    val outerScale = 1f + b * 0.1f * scaleMultiplier * fadeFraction
     val outerAlpha = (0.5f + b * 0.5f) * intensity * fadeFraction
-    val circleScale = 1f + b * 0.05f * fadeFraction
-    val glowAlpha = (0.15f + b * 0.10f) * intensity * fadeFraction
+    val circleScale = 1f + b * 0.05f * scaleMultiplier * fadeFraction
+    val glowAlpha = (0.15f + b * 0.10f) * intensity * fadeFraction * (if (isSleepMode) 0.6f else 1f)
     val shadowAlpha = (0.06f + (1f - b) * 0.10f) * intensity * fadeFraction
 
     Box(contentAlignment = Alignment.Center) {

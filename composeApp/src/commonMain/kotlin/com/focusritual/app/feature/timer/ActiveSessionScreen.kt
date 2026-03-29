@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.feature.session.SessionConfig
+import com.focusritual.app.feature.session.SessionMode
 import kotlinx.coroutines.delay
 
 private const val SLEEP_FADE_OUT_MS = 30_000L
@@ -50,19 +51,29 @@ private const val SLEEP_FADE_OUT_MS = 30_000L
 @Composable
 fun ActiveSessionScreen(
     config: SessionConfig,
+    sessionKey: Int = 0,
     onFinish: () -> Unit,
     onSoundControl: (Float?) -> Unit,
-    viewModel: ActiveSessionViewModel = viewModel { ActiveSessionViewModel(config) },
+    viewModel: ActiveSessionViewModel = viewModel(key = "session_$sessionKey") {
+        ActiveSessionViewModel(config)
+    },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isExiting by remember { mutableStateOf(false) }
 
-    // Sleep fade-out: animated presence that goes 1→0 over SLEEP_FADE_OUT_MS
+    // Sleep fade-out: use config duration when available, fallback to constant
+    val sleepFadeOutMs = if (config.mode == SessionMode.Sleep && config.sleepFadeOutMinutes > 0) {
+        (config.sleepFadeOutMinutes * 60 * 1000L).coerceAtLeast(1000L)
+    } else {
+        SLEEP_FADE_OUT_MS
+    }
+
+    // Sleep fade-out: animated presence that goes 1→0
     val sleepFadeTarget = if (uiState.isSleepFadingOut) 0f else 1f
     val sleepFade by animateFloatAsState(
         targetValue = sleepFadeTarget,
         animationSpec = tween(
-            durationMillis = SLEEP_FADE_OUT_MS.toInt(),
+            durationMillis = sleepFadeOutMs.toInt(),
             easing = EaseInOut,
         ),
     )
@@ -189,6 +200,7 @@ private fun ActiveSessionScreenContent(
                         AtmosphericField(
                             phase = uiState.phase,
                             isPaused = uiState.isPaused || uiState.isCompleted,
+                            isSleepMode = uiState.isSleepMode,
                             fadeFraction = if (isSleepFading) sleepFade else 1f,
                         ) {
                             Column(
@@ -215,7 +227,7 @@ private fun ActiveSessionScreenContent(
                                     Spacer(Modifier.height(16.dp))
                                 }
 
-                                if (!uiState.isCompleted && !isSleepFading) {
+                                if (!uiState.isCompleted && !isSleepFading && !uiState.isSleepMode) {
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
@@ -244,17 +256,23 @@ private fun ActiveSessionScreenContent(
             }
 
             if (!isSleepFading) {
-                ProgressSection(
-                    currentCycle = uiState.currentCycle,
-                    totalCycles = uiState.totalCycles,
-                    isCompleted = uiState.isCompleted,
-                )
+                if (!uiState.isSleepMode) {
+                    ProgressSection(
+                        currentCycle = uiState.currentCycle,
+                        totalCycles = uiState.totalCycles,
+                        isCompleted = uiState.isCompleted,
+                    )
 
-                Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                if (!uiState.isCompleted) {
-                    BottomControls(
-                        onSkip = { onIntent(ActiveSessionIntent.Skip) },
+                    if (!uiState.isCompleted) {
+                        BottomControls(
+                            onSkip = { onIntent(ActiveSessionIntent.Skip) },
+                            onStop = { onIntent(ActiveSessionIntent.Stop) },
+                        )
+                    }
+                } else if (!uiState.isCompleted) {
+                    SleepExitButton(
                         onStop = { onIntent(ActiveSessionIntent.Stop) },
                     )
                 }

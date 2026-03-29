@@ -14,13 +14,14 @@ import com.focusritual.app.feature.timer.ActiveSessionScreen
 sealed interface AppScreen {
     data object Mixer : AppScreen
     data object FocusSession : AppScreen
-    data class ActiveSession(val config: SessionConfig) : AppScreen
+    data class ActiveSession(val config: SessionConfig, val sessionId: Int = 0) : AppScreen
 }
 
 @Composable
 fun App() {
     FocusRitualTheme {
         var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Mixer) }
+        var sessionKey by remember { mutableIntStateOf(0) }
         val mixerViewModel: MixerViewModel = viewModel { MixerViewModel() }
 
         Crossfade(
@@ -34,11 +35,15 @@ fun App() {
                 )
                 AppScreen.FocusSession -> FocusSessionScreen(
                     onClose = { currentScreen = AppScreen.Mixer },
-                    onStartSession = { config -> currentScreen = AppScreen.ActiveSession(config) },
+                    onStartSession = { config -> currentScreen = AppScreen.ActiveSession(config, sessionKey) },
                 )
                 is AppScreen.ActiveSession -> ActiveSessionScreen(
                     config = screen.config,
-                    onFinish = { currentScreen = AppScreen.Mixer },
+                    sessionKey = screen.sessionId,
+                    onFinish = {
+                        sessionKey++
+                        currentScreen = AppScreen.Mixer
+                    },
                     onSoundControl = mixerViewModel::setSessionMasterVolume,
                 )
             }

@@ -100,7 +100,7 @@ private fun MixerScreenContent(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "START FOCUS SESSION",
+                            text = "START SESSION",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Light,
                             letterSpacing = 2.sp,
