@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -88,6 +89,7 @@ fun AboutSheet(onDismiss: () -> Unit) {
     ) {
         AnimatedContent(
             targetState = showSoundCredits,
+            modifier = Modifier.fillMaxHeight(),
             transitionSpec = {
                 if (targetState) {
                     (slideInHorizontally { it / 3 } + fadeIn(tween(250)))
