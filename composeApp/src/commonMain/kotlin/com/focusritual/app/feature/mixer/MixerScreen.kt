@@ -233,42 +233,55 @@ private fun HeroSessionButton(
                 drawCircle(
                     brush = Brush.radialGradient(
                         colorStops = arrayOf(
-                            0.0f to GlowColor.copy(alpha = 0.18f),
-                            0.35f to GlowColor.copy(alpha = 0.08f),
-                            0.7f to GlowColor.copy(alpha = 0.02f),
+                            0.0f to GlowColor.copy(alpha = 0.20f),
+                            0.3f to GlowColor.copy(alpha = 0.10f),
+                            0.6f to GlowColor.copy(alpha = 0.03f),
                             1.0f to Color.Transparent,
                         ),
-                        radius = size.width * 0.85f,
+                        radius = size.width * 0.9f,
                     ),
                     alpha = glowIntensity,
                 )
-                // Inner bright core
+                // Inner luminous core — adds depth to center
                 drawCircle(
                     brush = Brush.radialGradient(
                         colorStops = arrayOf(
-                            0.0f to Color.White.copy(alpha = 0.06f),
-                            0.5f to Color.White.copy(alpha = 0.02f),
+                            0.0f to Color.White.copy(alpha = 0.10f),
+                            0.3f to Color.White.copy(alpha = 0.04f),
                             1.0f to Color.Transparent,
                         ),
-                        radius = size.width * 0.4f,
+                        radius = size.width * 0.35f,
                     ),
-                    alpha = 0.5f + glowIntensity * 0.5f,
+                    alpha = 0.6f + glowIntensity * 0.4f,
+                )
+                // Soft inner shadow ring — creates concavity/depth
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color.Transparent,
+                            0.75f to Color.Transparent,
+                            0.92f to Color.Black.copy(alpha = 0.08f),
+                            1.0f to Color.Black.copy(alpha = 0.15f),
+                        ),
+                        radius = size.width * 0.5f,
+                    ),
                 )
             }
-            .shadow(12.dp, CircleShape)
+            .shadow(8.dp, CircleShape)
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
                     colorStops = arrayOf(
                         0.0f to surfaceBright.copy(alpha = bgAlpha),
-                        0.5f to surfaceBright.copy(alpha = bgAlpha * 0.85f),
-                        1.0f to surfaceBright.copy(alpha = bgAlpha * 0.6f),
+                        0.4f to surfaceBright.copy(alpha = bgAlpha * 0.88f),
+                        0.8f to surfaceBright.copy(alpha = bgAlpha * 0.7f),
+                        1.0f to surfaceBright.copy(alpha = bgAlpha * 0.55f),
                     ),
                 ),
             )
             .border(
                 width = 0.5.dp,
-                color = outlineVariant.copy(alpha = 0.18f),
+                color = outlineVariant.copy(alpha = 0.14f),
                 shape = CircleShape,
             )
             .clickable(
@@ -280,9 +293,9 @@ private fun HeroSessionButton(
         Text(
             text = "START SESSION",
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 1.5.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
         )
     }
 }
@@ -310,8 +323,8 @@ private fun CurrentMixPanel(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
-                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.88f),
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.96f),
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.93f),
                         ),
                     ),
                 )
