@@ -97,7 +97,7 @@ private fun MixerScreenContent(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 120.dp),
+            contentPadding = PaddingValues(bottom = 140.dp),
         ) {
             item {
                 Box(modifier = Modifier.fillMaxWidth()) {
@@ -195,7 +195,7 @@ private fun HeroSessionButton(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3500, easing = OrganicEasing),
+            animation = tween(4000, easing = OrganicEasing),
             repeatMode = RepeatMode.Reverse,
         ),
     )
@@ -205,10 +205,10 @@ private fun HeroSessionButton(
         animationSpec = tween(800),
     )
 
-    val scaleAnim = 1f + breath * 0.03f * glowIntensity
+    val scaleAnim = 1f + breath * 0.025f * glowIntensity
     val bgAlpha by animateFloatAsState(
-        targetValue = if (isPlaying) 0.8f else 0.6f,
-        animationSpec = tween(300),
+        targetValue = if (isPlaying) 0.85f else 0.65f,
+        animationSpec = tween(500),
     )
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -229,32 +229,46 @@ private fun HeroSessionButton(
                 scaleY = scaleAnim * pressScale
             }
             .drawBehind {
-                // Soft glow aura behind the circle
+                // Outer soft glow aura
                 drawCircle(
                     brush = Brush.radialGradient(
                         colorStops = arrayOf(
-                            0.0f to GlowColor.copy(alpha = 0.15f),
-                            0.4f to GlowColor.copy(alpha = 0.06f),
+                            0.0f to GlowColor.copy(alpha = 0.18f),
+                            0.35f to GlowColor.copy(alpha = 0.08f),
+                            0.7f to GlowColor.copy(alpha = 0.02f),
                             1.0f to Color.Transparent,
                         ),
-                        radius = size.width * 0.7f,
+                        radius = size.width * 0.85f,
                     ),
                     alpha = glowIntensity,
                 )
+                // Inner bright core
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color.White.copy(alpha = 0.06f),
+                            0.5f to Color.White.copy(alpha = 0.02f),
+                            1.0f to Color.Transparent,
+                        ),
+                        radius = size.width * 0.4f,
+                    ),
+                    alpha = 0.5f + glowIntensity * 0.5f,
+                )
             }
-            .shadow(24.dp, CircleShape)
+            .shadow(12.dp, CircleShape)
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
-                    colors = listOf(
-                        surfaceBright.copy(alpha = bgAlpha),
-                        surfaceBright.copy(alpha = bgAlpha * 0.7f),
+                    colorStops = arrayOf(
+                        0.0f to surfaceBright.copy(alpha = bgAlpha),
+                        0.5f to surfaceBright.copy(alpha = bgAlpha * 0.85f),
+                        1.0f to surfaceBright.copy(alpha = bgAlpha * 0.6f),
                     ),
                 ),
             )
             .border(
-                width = 1.dp,
-                color = outlineVariant.copy(alpha = 0.12f),
+                width = 0.5.dp,
+                color = outlineVariant.copy(alpha = 0.18f),
                 shape = CircleShape,
             )
             .clickable(
@@ -264,13 +278,11 @@ private fun HeroSessionButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "START\nSESSION",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Normal,
-            letterSpacing = 2.sp,
-            lineHeight = 18.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            text = "START SESSION",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 1.5.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
         )
     }
 }
@@ -287,23 +299,28 @@ private fun CurrentMixPanel(
         enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 },
         exit = fadeOut(tween(300)) + slideOutVertically(tween(300)) { it / 2 },
     ) {
-        val panelShape = RoundedCornerShape(20.dp)
+        val panelShape = RoundedCornerShape(18.dp)
 
         Box(
             modifier = Modifier
-                .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
+                .padding(start = 20.dp, end = 20.dp, bottom = 34.dp)
                 .fillMaxWidth()
-                .shadow(16.dp, panelShape)
+                .shadow(8.dp, panelShape)
                 .clip(panelShape)
                 .background(
-                    MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.90f),
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.88f),
+                        ),
+                    ),
                 )
                 .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f),
+                    width = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f),
                     shape = panelShape,
                 )
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -324,19 +341,31 @@ private fun CurrentMixPanel(
                     )
                 }
 
-                IconButton(onClick = onTogglePlayback) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                        )
+                        .clickable { onTogglePlayback() },
+                    contentAlignment = Alignment.Center,
+                ) {
                     Icon(
                         imageVector = if (uiState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
+
+                Spacer(Modifier.width(6.dp))
 
                 Icon(
                     imageVector = Icons.Filled.KeyboardArrowUp,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                 )
             }
         }
