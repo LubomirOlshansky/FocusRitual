@@ -6,6 +6,8 @@ data class SoundState(
     val icon: SoundIcon,
     val isEnabled: Boolean = false,
     val volume: Float = 0.5f,
+    val organicMotion: Boolean = false,
+    val liveVolume: Float? = null,
 )
 
 enum class SoundIcon {

@@ -3,6 +3,8 @@ package com.focusritual.app.core.designsystem.component
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,9 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Forest
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.LocalCafe
@@ -30,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.focusritual.app.feature.mixer.model.SoundIcon
@@ -53,6 +58,7 @@ fun SoundTile(
     onToggle: (Boolean) -> Unit,
     onVolumeChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    onToggleOrganicMotion: () -> Unit = {},
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (state.isEnabled) {
@@ -98,6 +104,30 @@ fun SoundTile(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.weight(1f))
+                // Organic motion toggle — small spark icon, secondary modifier
+                val motionTint by animateColorAsState(
+                    targetValue = if (state.organicMotion && state.isEnabled) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.70f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.18f)
+                    },
+                    animationSpec = tween(300),
+                )
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = state.isEnabled) { onToggleOrganicMotion() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.AutoAwesome,
+                        contentDescription = "Organic Motion",
+                        modifier = Modifier.size(16.dp),
+                        tint = motionTint,
+                    )
+                }
+                Spacer(Modifier.width(6.dp))
                 Switch(
                     checked = state.isEnabled,
                     onCheckedChange = onToggle,
@@ -117,6 +147,7 @@ fun SoundTile(
                 onValueChange = onVolumeChange,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = state.isEnabled,
+                liveValue = if (state.isEnabled) state.liveVolume else null,
             )
         }
     }

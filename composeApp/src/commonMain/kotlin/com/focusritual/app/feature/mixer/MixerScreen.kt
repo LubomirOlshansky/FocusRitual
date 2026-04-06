@@ -163,6 +163,7 @@ private fun MixerScreenContent(
                     state = sound,
                     onToggle = { onIntent(MixerIntent.ToggleSound(sound.id)) },
                     onVolumeChange = { volume -> onIntent(MixerIntent.AdjustVolume(sound.id, volume)) },
+                    onToggleOrganicMotion = { onIntent(MixerIntent.ToggleOrganicMotion(sound.id)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 6.dp),
