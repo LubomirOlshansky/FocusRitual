@@ -21,6 +21,7 @@ class MixerViewModel : ViewModel() {
 
     init {
         loadSoundResources()
+        _uiState.update { it.withDerivedFields() }
         viewModelScope.launch {
             combine(_uiState, _sessionMasterVolume) { state, sessionVolume ->
                 Triple(
@@ -55,7 +56,7 @@ class MixerViewModel : ViewModel() {
     fun onIntent(intent: MixerIntent) {
         when (intent) {
             MixerIntent.TogglePlayback -> {
-                _uiState.update { it.copy(isPlaying = !it.isPlaying) }
+                _uiState.update { it.copy(isPlaying = !it.isPlaying).withDerivedFields() }
             }
             is MixerIntent.ToggleSound -> {
                 _uiState.update { state ->
@@ -67,7 +68,7 @@ class MixerViewModel : ViewModel() {
                                 sound
                             }
                         }
-                    )
+                    ).withDerivedFields()
                 }
             }
             is MixerIntent.AdjustVolume -> {
@@ -80,10 +81,21 @@ class MixerViewModel : ViewModel() {
                                 sound
                             }
                         }
-                    )
+                    ).withDerivedFields()
                 }
             }
         }
+    }
+
+    private fun MixerUiState.withDerivedFields(): MixerUiState {
+        val enabled = sounds.filter { it.isEnabled }
+        val count = enabled.size
+        val summary = when {
+            count == 0 -> ""
+            count <= 2 -> enabled.joinToString(" • ") { it.name }
+            else -> enabled.take(2).joinToString(" • ") { it.name } + " • +${count - 2}"
+        }
+        return copy(activeSoundsSummary = summary, activeSoundCount = count)
     }
 
     override fun onCleared() {
