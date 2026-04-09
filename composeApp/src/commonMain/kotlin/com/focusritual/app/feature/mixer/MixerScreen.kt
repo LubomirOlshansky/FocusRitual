@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.focusritual.app.core.designsystem.component.AirPlayButton
 import com.focusritual.app.core.designsystem.component.SoundTile
 import com.focusritual.app.feature.about.AboutSheet
 import focusritual.composeapp.generated.resources.Res
@@ -354,6 +355,22 @@ private fun CurrentMixPanel(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                     )
                 }
+
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AirPlayButton(
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+
+                Spacer(Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
