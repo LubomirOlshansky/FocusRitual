@@ -92,6 +92,7 @@ private fun MixerScreenContent(
     onStartSession: () -> Unit,
 ) {
     var showAboutSheet by remember { mutableStateOf(false) }
+    var showCurrentMixModal by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         ImmersiveBackground()
@@ -176,11 +177,20 @@ private fun MixerScreenContent(
         CurrentMixPanel(
             uiState = uiState,
             onTogglePlayback = { onIntent(MixerIntent.TogglePlayback) },
+            onPanelTap = { showCurrentMixModal = true },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
         if (showAboutSheet) {
             AboutSheet(onDismiss = { showAboutSheet = false })
+        }
+
+        if (showCurrentMixModal) {
+            CurrentMixModal(
+                uiState = uiState,
+                onIntent = onIntent,
+                onDismiss = { showCurrentMixModal = false },
+            )
         }
     }
 }
@@ -307,6 +317,7 @@ private fun CurrentMixPanel(
     uiState: MixerUiState,
     onTogglePlayback: () -> Unit,
     modifier: Modifier = Modifier,
+    onPanelTap: () -> Unit = {},
 ) {
     AnimatedVisibility(
         visible = uiState.activeSoundCount > 0,
@@ -335,6 +346,7 @@ private fun CurrentMixPanel(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f),
                     shape = panelShape,
                 )
+                .clickable { onPanelTap() }
                 .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Row(

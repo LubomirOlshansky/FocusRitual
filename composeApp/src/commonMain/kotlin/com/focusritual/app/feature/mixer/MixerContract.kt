@@ -15,4 +15,6 @@ sealed interface MixerIntent {
     data class ToggleSound(val soundId: String) : MixerIntent
     data class AdjustVolume(val soundId: String, val volume: Float) : MixerIntent
     data class ToggleOrganicMotion(val soundId: String) : MixerIntent
+    data class RemoveFromMix(val soundId: String) : MixerIntent
+    data object ToggleGlobalOrganicMotion : MixerIntent
 }

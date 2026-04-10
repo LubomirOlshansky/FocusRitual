@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.focusritual.app.feature.mixer.model.SoundIcon
 import com.focusritual.app.feature.mixer.model.SoundState
 
-private fun SoundIcon.toImageVector(): ImageVector = when (this) {
+fun SoundIcon.toImageVector(): ImageVector = when (this) {
     SoundIcon.Rain -> Icons.Filled.WaterDrop
     SoundIcon.Thunder -> Icons.Filled.Thunderstorm
     SoundIcon.Wind -> Icons.Filled.Air

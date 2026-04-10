@@ -135,6 +135,41 @@ class MixerViewModel : ViewModel() {
                     ).withDerivedFields()
                 }
             }
+            is MixerIntent.RemoveFromMix -> {
+                _uiState.update { state ->
+                    state.copy(
+                        sounds = state.sounds.map { sound ->
+                            if (sound.id == intent.soundId) {
+                                organicEngine.disable(sound.id)
+                                sound.copy(isEnabled = false)
+                            } else {
+                                sound
+                            }
+                        },
+                    ).withDerivedFields()
+                }
+            }
+            MixerIntent.ToggleGlobalOrganicMotion -> {
+                _uiState.update { state ->
+                    val activeSounds = state.sounds.filter { it.isEnabled }
+                    val anyOrganicOn = activeSounds.any { it.organicMotion }
+                    state.copy(
+                        sounds = state.sounds.map { sound ->
+                            if (sound.isEnabled) {
+                                if (anyOrganicOn) {
+                                    organicEngine.disable(sound.id)
+                                    sound.copy(organicMotion = false)
+                                } else {
+                                    organicEngine.enable(sound.id, sound.volume)
+                                    sound.copy(organicMotion = true)
+                                }
+                            } else {
+                                sound
+                            }
+                        },
+                    ).withDerivedFields()
+                }
+            }
         }
     }
 
