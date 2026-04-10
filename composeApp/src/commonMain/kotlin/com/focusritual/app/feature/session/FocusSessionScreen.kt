@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.focusritual.app.core.designsystem.component.ProtectFocusCard
 
 @Composable
 fun FocusSessionScreen(
@@ -156,6 +157,12 @@ private fun FocusSessionScreenContent(
                             sessions = uiState.customSessions,
                             onSelect = { onIntent(FocusSessionIntent.SelectCustom) },
                             onIntent = onIntent,
+                        )
+
+                        Spacer(Modifier.height(20.dp))
+
+                        ProtectFocusCard(
+                            onClick = { /* future: protect focus setup */ },
                         )
                     }
                     SessionMode.Sleep -> {
