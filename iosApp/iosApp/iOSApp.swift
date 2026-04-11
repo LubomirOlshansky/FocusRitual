@@ -7,6 +7,7 @@ struct iOSApp: App {
         #if !targetEnvironment(simulator)
         ScreenTimeBridge.shared.handler = ScreenTimeManager()
         #endif
+        LiveActivityBridge.shared.handler = LiveActivityManager()
     }
 
     var body: some Scene {

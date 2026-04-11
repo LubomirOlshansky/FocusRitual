@@ -6,11 +6,58 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		044F8FD62F8B0D9F000348C7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 044F8FD52F8B0D9F000348C7 /* WidgetKit.framework */; };
+		044F8FD82F8B0D9F000348C7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 044F8FD72F8B0D9F000348C7 /* SwiftUI.framework */; };
+		044F8FE32F8B0DA0000348C7 /* FocusRitualWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 044F8FD32F8B0D9F000348C7 /* FocusRitualWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		044F8FE12F8B0DA0000348C7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE0A21908E5193941638B6B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 044F8FD22F8B0D9F000348C7;
+			remoteInfo = FocusRitualWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		044F8FE82F8B0DA0000348C7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				044F8FE32F8B0DA0000348C7 /* FocusRitualWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		044F8FD32F8B0D9F000348C7 /* FocusRitualWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FocusRitualWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		044F8FD52F8B0D9F000348C7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		044F8FD72F8B0D9F000348C7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		940D88909D00636689090CA5 /* FocusRitual.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusRitual.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		044F8FE72F8B0DA0000348C7 /* Exceptions for "FocusRitualWidget" folder in "FocusRitualWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 044F8FD22F8B0D9F000348C7 /* FocusRitualWidgetExtension */;
+		};
+		044F8FFB2F8B0F86000348C7 /* Exceptions for "FocusRitualWidget" folder in "iosApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				FocusRitualAttributes.swift,
+			);
+			target = 6E4CF70E800E39EA38554531 /* iosApp */;
+		};
 		69F4A6572F113FBAAE246052 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -21,6 +68,15 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		044F8FD92F8B0D9F000348C7 /* FocusRitualWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				044F8FFB2F8B0F86000348C7 /* Exceptions for "FocusRitualWidget" folder in "iosApp" target */,
+				044F8FE72F8B0DA0000348C7 /* Exceptions for "FocusRitualWidget" folder in "FocusRitualWidgetExtension" target */,
+			);
+			path = FocusRitualWidget;
+			sourceTree = "<group>";
+		};
 		87ABA4CC4D1601BDA92E4E9D /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -37,6 +93,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		044F8FD02F8B0D9F000348C7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				044F8FD82F8B0D9F000348C7 /* SwiftUI.framework in Frameworks */,
+				044F8FD62F8B0D9F000348C7 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ED5BC775DBA97CADF24F3E81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -47,10 +112,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		044F8FD42F8B0D9F000348C7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				044F8FD52F8B0D9F000348C7 /* WidgetKit.framework */,
+				044F8FD72F8B0D9F000348C7 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		407962558E4AAEC8947EEAE7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				940D88909D00636689090CA5 /* FocusRitual.app */,
+				044F8FD32F8B0D9F000348C7 /* FocusRitualWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,6 +135,8 @@
 			children = (
 				8E31B35031AE88DB46E941D7 /* Configuration */,
 				87ABA4CC4D1601BDA92E4E9D /* iosApp */,
+				044F8FD92F8B0D9F000348C7 /* FocusRitualWidget */,
+				044F8FD42F8B0D9F000348C7 /* Frameworks */,
 				407962558E4AAEC8947EEAE7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -67,6 +144,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		044F8FD22F8B0D9F000348C7 /* FocusRitualWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 044F8FE42F8B0DA0000348C7 /* Build configuration list for PBXNativeTarget "FocusRitualWidgetExtension" */;
+			buildPhases = (
+				044F8FCF2F8B0D9F000348C7 /* Sources */,
+				044F8FD02F8B0D9F000348C7 /* Frameworks */,
+				044F8FD12F8B0D9F000348C7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				044F8FD92F8B0D9F000348C7 /* FocusRitualWidget */,
+			);
+			name = FocusRitualWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = FocusRitualWidgetExtension;
+			productReference = 044F8FD32F8B0D9F000348C7 /* FocusRitualWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		6E4CF70E800E39EA38554531 /* iosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7563D194AAAC2F10CF659FBF /* Build configuration list for PBXNativeTarget "iosApp" */;
@@ -75,10 +174,12 @@
 				D4444564FCAB1E0FD12C74AD /* Sources */,
 				ED5BC775DBA97CADF24F3E81 /* Frameworks */,
 				226C9BD32E2020089A95135C /* Resources */,
+				044F8FE82F8B0DA0000348C7 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				044F8FE22F8B0DA0000348C7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				87ABA4CC4D1601BDA92E4E9D /* iosApp */,
@@ -97,9 +198,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					044F8FD22F8B0D9F000348C7 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					6E4CF70E800E39EA38554531 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -120,11 +224,19 @@
 			projectRoot = "";
 			targets = (
 				6E4CF70E800E39EA38554531 /* iosApp */,
+				044F8FD22F8B0D9F000348C7 /* FocusRitualWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		044F8FD12F8B0D9F000348C7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		226C9BD32E2020089A95135C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -157,6 +269,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		044F8FCF2F8B0D9F000348C7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D4444564FCAB1E0FD12C74AD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -166,7 +285,81 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		044F8FE22F8B0DA0000348C7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 044F8FD22F8B0D9F000348C7 /* FocusRitualWidgetExtension */;
+			targetProxy = 044F8FE12F8B0DA0000348C7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		044F8FE52F8B0DA0000348C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S6PVT5UP7G;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FocusRitualWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FocusRitualWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lubomyr.focusritual.dev.FocusRitualWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		044F8FE62F8B0DA0000348C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S6PVT5UP7G;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FocusRitualWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FocusRitualWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lubomyr.focusritual.dev.FocusRitualWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		373B6DAF58AD7FB365B4256D /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 8E31B35031AE88DB46E941D7 /* Configuration */;
@@ -351,6 +544,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		044F8FE42F8B0DA0000348C7 /* Build configuration list for PBXNativeTarget "FocusRitualWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				044F8FE52F8B0DA0000348C7 /* Debug */,
+				044F8FE62F8B0DA0000348C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		3E718B98462E8591C19B3719 /* Build configuration list for PBXProject "iosApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
