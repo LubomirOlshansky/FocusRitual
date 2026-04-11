@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.ProtectFocusCard
 import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
+import com.focusritual.app.core.protectfocus.ProtectFocusConfig
 import com.focusritual.app.core.protectfocus.ProtectFocusController
 import com.focusritual.app.core.protectfocus.ProtectFocusState
 import com.focusritual.app.core.protectfocus.SetupResult
@@ -86,6 +87,7 @@ private fun FocusSessionScreenContent(
     onIntent: (FocusSessionIntent) -> Unit,
 ) {
     var protectFocusState by remember { mutableStateOf<ProtectFocusState>(ProtectFocusState.Idle) }
+    var protectFocusConfig by remember { mutableStateOf(ProtectFocusConfig()) }
     val protectFocusController = remember { ProtectFocusController() }
     val scope = rememberCoroutineScope()
 
@@ -172,6 +174,15 @@ private fun FocusSessionScreenContent(
                         Spacer(Modifier.height(20.dp))
 
                         ProtectFocusCard(
+                            isConfigured = protectFocusConfig.isConfigured,
+                            blockedAppCount = protectFocusConfig.blockedAppCount,
+                            isEnabled = protectFocusConfig.isEnabled,
+                            onToggle = { enabled ->
+                                protectFocusConfig = protectFocusConfig.copy(isEnabled = enabled)
+                            },
+                            onEditBlockedApps = {
+                                protectFocusState = ProtectFocusState.SheetOpen
+                            },
                             onClick = { protectFocusState = ProtectFocusState.SheetOpen },
                         )
                     }
@@ -228,7 +239,14 @@ private fun FocusSessionScreenContent(
                     scope.launch {
                         val result = protectFocusController.requestSetup()
                         protectFocusState = when (result) {
-                            SetupResult.Success -> ProtectFocusState.SetupCompleted
+                            SetupResult.Success -> {
+                                protectFocusConfig = ProtectFocusConfig(
+                                    isConfigured = true,
+                                    blockedAppCount = 12,
+                                    isEnabled = true,
+                                )
+                                ProtectFocusState.Idle
+                            }
                             SetupResult.Cancelled -> ProtectFocusState.Idle
                             SetupResult.PermissionDenied -> ProtectFocusState.PermissionDenied
                         }

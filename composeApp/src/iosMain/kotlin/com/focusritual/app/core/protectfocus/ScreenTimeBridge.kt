@@ -9,5 +9,6 @@ interface ScreenTimeHandler {
 }
 
 object ScreenTimeBridge {
-    var handler: ScreenTimeHandler? = null
+    var useMock: Boolean = true
+    var handler: ScreenTimeHandler? = if (useMock) MockScreenTimeHandler() else null
 }

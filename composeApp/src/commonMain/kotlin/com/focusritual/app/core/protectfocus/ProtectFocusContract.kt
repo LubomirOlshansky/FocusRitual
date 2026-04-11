@@ -14,3 +14,9 @@ sealed interface SetupResult {
     data object Cancelled : SetupResult
     data object PermissionDenied : SetupResult
 }
+
+data class ProtectFocusConfig(
+    val isConfigured: Boolean = false,
+    val blockedAppCount: Int = 0,
+    val isEnabled: Boolean = true,
+)
