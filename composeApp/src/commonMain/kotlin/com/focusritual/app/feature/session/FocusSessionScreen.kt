@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.ProtectFocusCard
+import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
 
 @Composable
 fun FocusSessionScreen(
@@ -79,6 +80,8 @@ private fun FocusSessionScreenContent(
     onModeChange: (SessionMode) -> Unit,
     onIntent: (FocusSessionIntent) -> Unit,
 ) {
+    var showProtectFocusSheet by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -162,7 +165,7 @@ private fun FocusSessionScreenContent(
                         Spacer(Modifier.height(20.dp))
 
                         ProtectFocusCard(
-                            onClick = { /* future: protect focus setup */ },
+                            onClick = { showProtectFocusSheet = true },
                         )
                     }
                     SessionMode.Sleep -> {
@@ -203,6 +206,13 @@ private fun FocusSessionScreenContent(
                     color = MaterialTheme.colorScheme.surface,
                 )
             }
+        }
+
+        if (showProtectFocusSheet) {
+            ProtectFocusSetupSheet(
+                onDismiss = { showProtectFocusSheet = false },
+                onChooseBlockedApps = { /* future: navigate to app picker */ },
+            )
         }
     }
 }

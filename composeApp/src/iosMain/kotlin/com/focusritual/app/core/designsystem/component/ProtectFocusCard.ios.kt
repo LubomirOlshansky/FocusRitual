@@ -63,7 +63,7 @@ actual fun ProtectFocusCard(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Keep distractions outside this session",
+                    text = "Keep distracting apps outside this session",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.60f),
                 )
