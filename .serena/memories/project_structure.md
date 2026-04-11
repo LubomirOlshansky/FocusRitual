@@ -31,14 +31,23 @@ FocusRitual/                         ← Root (Gradle root project)
 │       └── iosMain/kotlin/com/focusritual/app/
 │           ├── MainViewController.kt ← ComposeUIViewController { App() }
 │           ├── Platform.ios.kt       ← actual fun getPlatform()
-│           └── core/audio/
-│               └── AudioPlayer.ios.kt ← actual: AVAudioPlayer
+│           └── core/
+│               ├── audio/
+│               │   └── AudioPlayer.ios.kt ← actual: AVAudioPlayer
+│               ├── designsystem/component/
+│               │   ├── AirPlayButton.ios.kt       ← actual: AVRoutePickerView
+│               │   ├── ProtectFocusCard.ios.kt     ← actual: entry row with shield icon
+│               │   └── ProtectFocusSetupSheet.ios.kt ← actual: premium bottom sheet
+│               └── protectfocus/
+│                   ├── ScreenTimeBridge.kt          ← ScreenTimeHandler interface + singleton
+│                   └── ProtectFocusController.ios.kt ← actual: suspendCancellableCoroutine → bridge
 │
 └── iosApp/                          ← iOS Xcode project (thin SwiftUI wrapper)
     ├── Configuration/Config.xcconfig
     ├── iosApp/
-    │   ├── iOSApp.swift             ← @main SwiftUI App, renders ContentView
+    │   ├── iOSApp.swift             ← @main SwiftUI App, registers ScreenTimeBridge
     │   ├── ContentView.swift        ← UIViewControllerRepresentable bridging to Compose
+    │   ├── ScreenTimeManager.swift  ← FamilyControls auth + FamilyActivityPicker (Swift-only APIs)
     │   └── Info.plist
     └── iosApp.xcodeproj/            ← Xcode project files
 ```
@@ -56,13 +65,22 @@ com/focusritual/app/
 │   │   ├── SoundResources.kt       ← Maps sound IDs → Compose resource paths
 │   │   └── SoundMixer.kt           ← Orchestrates multiple AudioPlayers, syncState(sounds, isPlaying, masterVolume)
 │   │
-│   └── designsystem/
-│       ├── theme/
-│       │   ├── Color.kt            ← 17 color tokens (dark palette incl. Outline)
-│       │   ├── Type.kt             ← FocusRitualTypography (5 text styles, system font)
-│       │   └── Theme.kt            ← FocusRitualTheme wrapping MaterialTheme with darkColorScheme
-│       └── component/
-│           └── PlayButton.kt       ← Reusable 96dp circular glassmorphic play/pause button
+│   ├── designsystem/
+│   │   ├── theme/
+│   │   │   ├── Color.kt            ← 17 color tokens (dark palette incl. Outline)
+│   │   │   ├── Type.kt             ← FocusRitualTypography (5 text styles, system font)
+│   │   │   └── Theme.kt            ← FocusRitualTheme wrapping MaterialTheme with darkColorScheme
+│   │   └── component/
+│   │       ├── PlayButton.kt       ← Reusable 96dp circular glassmorphic play/pause button
+│   │       ├── AirPlayButton.kt    ← expect/actual: iOS AirPlay route picker
+│   │       ├── ProtectFocusCard.kt ← expect/actual: entry row on session screen
+│   │       ├── ProtectFocusSetupSheet.kt ← expect/actual: premium bottom sheet (isSettingUp param)
+│   │       ├── SoundTile.kt        ← Sound toggle tile
+│   │       └── VolumeSlider.kt     ← Volume slider component
+│   │
+│   └── protectfocus/
+│       ├── ProtectFocusContract.kt  ← ProtectFocusState + SetupResult sealed interfaces
+│       └── ProtectFocusController.kt ← expect class: suspend requestSetup() → SetupResult
 │
 └── feature/
     ├── mixer/
@@ -115,6 +133,16 @@ com/focusritual/app/
 - `animateFloatAsState(tween(400))` provides smooth fade transitions
 - `DisposableEffect` ensures `onSoundControl(null)` on composition exit (releases session control)
 - Session exit uses `isExiting` flag → fade-out animation → then `onFinish()` navigation
+
+### Protect Focus (iOS-only Screen Time blocking)
+- **Bridge pattern** for Swift-only FamilyControls APIs (not @objc, can't call from Kotlin/Native)
+- `ScreenTimeHandler` — Kotlin interface in iosMain, compiles to ObjC @protocol
+- `ScreenTimeBridge` — Kotlin object singleton, holds `handler: ScreenTimeHandler?`
+- `ScreenTimeManager.swift` — Swift class conforming to ScreenTimeHandler, uses AuthorizationCenter + FamilyActivityPicker
+- Registered at app startup: `ScreenTimeBridge.shared.handler = ScreenTimeManager()` in iOSApp.swift
+- `ProtectFocusController` — expect/actual class, iOS actual uses `suspendCancellableCoroutine` to bridge callbacks → coroutine
+- **State machine** in FocusSessionScreenContent: `ProtectFocusState` (Idle → SheetOpen → SettingUp → SetupCompleted/Cancelled/PermissionDenied)
+- CTA disables (alpha dim) while `SettingUp`, native picker covers the sheet
 
 ### Screen Flow
 ```

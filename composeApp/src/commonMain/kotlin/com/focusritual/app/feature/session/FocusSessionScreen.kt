@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.ProtectFocusCard
 import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
+import com.focusritual.app.core.protectfocus.ProtectFocusController
+import com.focusritual.app.core.protectfocus.ProtectFocusState
+import com.focusritual.app.core.protectfocus.SetupResult
+import kotlinx.coroutines.launch
 
 @Composable
 fun FocusSessionScreen(
@@ -80,7 +85,9 @@ private fun FocusSessionScreenContent(
     onModeChange: (SessionMode) -> Unit,
     onIntent: (FocusSessionIntent) -> Unit,
 ) {
-    var showProtectFocusSheet by remember { mutableStateOf(false) }
+    var protectFocusState by remember { mutableStateOf<ProtectFocusState>(ProtectFocusState.Idle) }
+    val protectFocusController = remember { ProtectFocusController() }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -165,7 +172,7 @@ private fun FocusSessionScreenContent(
                         Spacer(Modifier.height(20.dp))
 
                         ProtectFocusCard(
-                            onClick = { showProtectFocusSheet = true },
+                            onClick = { protectFocusState = ProtectFocusState.SheetOpen },
                         )
                     }
                     SessionMode.Sleep -> {
@@ -208,10 +215,25 @@ private fun FocusSessionScreenContent(
             }
         }
 
-        if (showProtectFocusSheet) {
+        val showSheet = protectFocusState is ProtectFocusState.SheetOpen ||
+            protectFocusState is ProtectFocusState.SettingUp ||
+            protectFocusState is ProtectFocusState.PermissionDenied
+
+        if (showSheet) {
             ProtectFocusSetupSheet(
-                onDismiss = { showProtectFocusSheet = false },
-                onChooseBlockedApps = { /* future: navigate to app picker */ },
+                isSettingUp = protectFocusState is ProtectFocusState.SettingUp,
+                onDismiss = { protectFocusState = ProtectFocusState.Idle },
+                onChooseBlockedApps = {
+                    protectFocusState = ProtectFocusState.SettingUp
+                    scope.launch {
+                        val result = protectFocusController.requestSetup()
+                        protectFocusState = when (result) {
+                            SetupResult.Success -> ProtectFocusState.SetupCompleted
+                            SetupResult.Cancelled -> ProtectFocusState.Idle
+                            SetupResult.PermissionDenied -> ProtectFocusState.PermissionDenied
+                        }
+                    }
+                },
             )
         }
     }

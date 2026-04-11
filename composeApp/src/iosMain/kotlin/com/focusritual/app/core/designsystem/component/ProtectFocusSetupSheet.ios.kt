@@ -1,11 +1,11 @@
 package com.focusritual.app.core.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -30,6 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 actual fun ProtectFocusSetupSheet(
+    isSettingUp: Boolean,
     onDismiss: () -> Unit,
     onChooseBlockedApps: () -> Unit,
 ) {
@@ -59,91 +62,167 @@ actual fun ProtectFocusSetupSheet(
             )
         },
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Header row — close button on the left
-            Row(
+        val ambientColor = MaterialTheme.colorScheme.primaryContainer
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .drawBehind {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                center = Offset(size.width / 2f, size.height * 0.22f),
+                                colorStops = arrayOf(
+                                    0.0f to ambientColor.copy(alpha = 0.20f),
+                                    0.5f to ambientColor.copy(alpha = 0.06f),
+                                    1.0f to Color.Transparent,
+                                ),
+                                radius = size.width * 0.65f,
+                            ),
+                        )
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                Spacer(Modifier.height(36.dp))
+
+                // Shield icon with ambient layers
+                Box(contentAlignment = Alignment.Center) {
+                    // Outer ambient halo
+                    Box(
+                        modifier = Modifier
+                            .size(128.dp)
+                            .drawBehind {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colorStops = arrayOf(
+                                            0.0f to ambientColor.copy(alpha = 0.18f),
+                                            0.55f to ambientColor.copy(alpha = 0.04f),
+                                            1.0f to Color.Transparent,
+                                        ),
+                                        radius = size.width * 0.5f,
+                                    ),
+                                )
+                            },
+                    )
+
+                    // Inner icon circle with ghost border
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(ambientColor.copy(alpha = 0.14f))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.06f),
+                                shape = CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Shield,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.50f),
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(28.dp))
+
+                // Title
+                Text(
+                    text = "Protect Focus",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f),
+                    letterSpacing = 0.5.sp,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Supporting text
+                Text(
+                    text = "Protect this session from digital distractions",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.50f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp),
+                )
+
+                Spacer(Modifier.height(36.dp))
+
+                // Helper text
+                Text(
+                    text = "You'll choose apps and websites in the next step",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.32f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 40.dp),
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // Primary CTA
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(
+                                alpha = if (isSettingUp) 0.4f else 1f,
+                            ),
+                        )
+                        .then(
+                            if (!isSettingUp) {
+                                Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) { onChooseBlockedApps() }
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Choose apps to block",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        color = MaterialTheme.colorScheme.surface.copy(
+                            alpha = if (isSettingUp) 0.5f else 1f,
+                        ),
                     )
                 }
+
+                // Bottom padding
+                Spacer(Modifier.navigationBarsPadding().padding(bottom = 28.dp))
             }
 
-            Spacer(Modifier.height(48.dp))
-
-            // Shield icon
+            // Close button — ghost circle, top-right
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(top = 4.dp, end = 16.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Shield,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.40f),
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // Title
-            Text(
-                text = "Protect Focus",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Supporting text
-            Text(
-                text = "Keep distracting apps outside this session",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(Modifier.height(40.dp))
-
-            // Primary CTA
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.20f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) { onChooseBlockedApps() }
-                    .padding(vertical = 16.dp),
+                    ) { onDismiss() },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "Choose apps to block",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.8.sp,
-                    color = MaterialTheme.colorScheme.surface,
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
                 )
             }
-
-            // Bottom padding
-            Spacer(Modifier.navigationBarsPadding().padding(bottom = 24.dp))
         }
     }
 }

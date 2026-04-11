@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 actual fun ProtectFocusSetupSheet(
+    isSettingUp: Boolean,
     onDismiss: () -> Unit,
     onChooseBlockedApps: () -> Unit,
 ) { }
