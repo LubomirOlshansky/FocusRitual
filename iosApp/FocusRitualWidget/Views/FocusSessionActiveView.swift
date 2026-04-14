@@ -1,96 +1,97 @@
 import SwiftUI
 import WidgetKit
 
-/// State 2 — Focus Session Active.
-/// Strongest hierarchy: large countdown, phase, cycle indicator, progress ring.
+/// State 2 — Focus Session Active (Lock Screen).
+/// Timer left | vertical divider | cycle dots + progress right.
 struct FocusSessionActiveView: View {
     let state: FocusRitualAttributes.ContentState
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Left: timer with progress halo
-            timerBlock
-                .frame(width: 90)
+        HStack(alignment: .center, spacing: 0) {
+            // Left block: timer + phase
+            VStack(alignment: .leading, spacing: 4) {
+                Group {
+                    if state.isPaused {
+                        Text(state.remainingFormatted)
+                    } else {
+                        Text(timerInterval: Date()...state.timerEndDate, countsDown: true)
+                    }
+                }
+                .font(.system(size: 36, weight: .ultraLight))
+                .foregroundStyle(Color.white.opacity(0.88))
+                .monospacedDigit()
+
+                Text(state.phase.uppercased())
+                    .font(.system(size: 10, weight: .light))
+                    .tracking(1.2)
+                    .foregroundStyle(Color.white.opacity(0.28))
+            }
+            .padding(.trailing, 13)
+
+            // Vertical divider
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 0.5)
+                .padding(.vertical, 2)
+
+            // Right block: cycle info + progress
+            VStack(alignment: .leading, spacing: 0) {
+                Text("CYCLE \(state.currentCycle) OF \(state.totalCycles)")
+                    .font(.system(size: 10, weight: .light))
+                    .tracking(1.0)
+                    .foregroundStyle(Color.white.opacity(0.26))
+                    .monospacedDigit()
+
+                Spacer().frame(height: 5)
+
+                // Cycle dots
+                HStack(spacing: 5) {
+                    ForEach(0..<state.totalCycles, id: \.self) { i in
+                        Circle()
+                            .fill(Color.white.opacity(i < state.currentCycle ? 0.7 : 0.14))
+                            .frame(width: 5, height: 5)
+                    }
+                }
+
+                Spacer().frame(height: 9)
+
+                // Progress bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 1.5)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.35))
+                            .frame(width: geo.size.width * CGFloat(state.progress), height: 1.5)
+                    }
+                }
+                .frame(height: 1.5)
+
+                Spacer().frame(height: 6)
+
+                Text(state.mixSummary)
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundStyle(Color.white.opacity(0.2))
+            }
+            .padding(.leading, 13)
 
             Spacer(minLength: 8)
 
-            // Center: labels
-            VStack(alignment: .leading, spacing: 4) {
-                RitualTokens.label("FOCUS SESSION")
-
-                Text(state.phase)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(RitualTokens.onSurface.opacity(0.8))
-
-                RitualTokens.caption(state.cycleLabel)
-
-                RitualTokens.caption(state.mixSummary)
-            }
-
-            Spacer(minLength: 12)
-
-            // Right: actions
-            VStack(spacing: 10) {
+            // Action buttons
+            VStack(spacing: 8) {
                 LiveActivityButton(
                     systemImage: state.isPaused ? "play.fill" : "pause.fill",
-                    intent: "togglePause"
+                    intent: TogglePauseIntent()
                 )
                 LiveActivityButton(
                     systemImage: "xmark",
                     style: .secondary,
-                    intent: "end"
+                    intent: EndSessionIntent()
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(focusBackground)
-    }
-
-    private var timerBlock: some View {
-        ZStack {
-            // Subtle halo ring — thin circular progress
-            Circle()
-                .trim(from: 0, to: state.progress)
-                .stroke(
-                    RitualTokens.primary.opacity(0.25),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .frame(width: 72, height: 72)
-
-            // Ghost ring track
-            Circle()
-                .stroke(
-                    RitualTokens.outlineVariant.opacity(0.15),
-                    lineWidth: 1
-                )
-                .frame(width: 72, height: 72)
-
-            // Timer text
-            Text(state.remainingFormatted)
-                .font(.system(size: 20, weight: .ultraLight, design: .default))
-                .kerning(-0.3)
-                .foregroundStyle(RitualTokens.onSurface)
-                .monospacedDigit()
-        }
-    }
-
-    private var focusBackground: some View {
-        ZStack {
-            RitualTokens.surface
-
-            // Structured radial glow — intentional, focused energy
-            RadialGradient(
-                colors: [
-                    RitualTokens.primary.opacity(0.06),
-                    RitualTokens.primary.opacity(0.02),
-                    Color.clear,
-                ],
-                center: .leading,
-                startRadius: 20,
-                endRadius: 180
-            )
-        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
     }
 }

@@ -33,6 +33,13 @@ struct FocusRitualAttributes: ActivityAttributes {
         // Sleep-only
         let fadeOutMinutes: Int
 
+        // Timer endpoint (seconds since epoch) for native countdown
+        let endTimestamp: TimeInterval
+
+        var timerEndDate: Date {
+            Date(timeIntervalSince1970: endTimestamp)
+        }
+
         // MARK: Derived
 
         var progress: Double {
@@ -74,7 +81,8 @@ extension FocusRitualAttributes.ContentState {
             phase: "",
             currentCycle: 0,
             totalCycles: 0,
-            fadeOutMinutes: 0
+            fadeOutMinutes: 0,
+            endTimestamp: 0
         )
     }
 
@@ -85,7 +93,8 @@ extension FocusRitualAttributes.ContentState {
         totalSeconds: Int,
         phase: String,
         currentCycle: Int,
-        totalCycles: Int
+        totalCycles: Int,
+        endTimestamp: TimeInterval
     ) -> Self {
         .init(
             isPaused: isPaused,
@@ -96,7 +105,8 @@ extension FocusRitualAttributes.ContentState {
             phase: phase,
             currentCycle: currentCycle,
             totalCycles: totalCycles,
-            fadeOutMinutes: 0
+            fadeOutMinutes: 0,
+            endTimestamp: endTimestamp
         )
     }
 
@@ -105,7 +115,8 @@ extension FocusRitualAttributes.ContentState {
         mixSummary: String,
         remainingSeconds: Int,
         totalSeconds: Int,
-        fadeOutMinutes: Int
+        fadeOutMinutes: Int,
+        endTimestamp: TimeInterval
     ) -> Self {
         .init(
             isPaused: isPaused,
@@ -116,7 +127,8 @@ extension FocusRitualAttributes.ContentState {
             phase: "",
             currentCycle: 0,
             totalCycles: 0,
-            fadeOutMinutes: fadeOutMinutes
+            fadeOutMinutes: fadeOutMinutes,
+            endTimestamp: endTimestamp
         )
     }
 }

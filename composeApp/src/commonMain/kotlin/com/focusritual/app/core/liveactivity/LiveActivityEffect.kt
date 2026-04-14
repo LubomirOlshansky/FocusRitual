@@ -17,4 +17,8 @@ expect fun LiveActivityEffect(
     mixerState: MixerUiState,
     sessionState: ActiveSessionUiState?,
     isSessionActive: Boolean,
+    onTogglePause: () -> Unit,
+    onStopMix: () -> Unit,
+    onSkipPhase: () -> Unit,
+    onEndSession: () -> Unit,
 )

@@ -41,7 +41,9 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
         )
 
         do {
-            let content = ActivityContent(state: contentState, staleDate: nil)
+            // staleDate tells iOS to auto-dismiss if the app stops updating
+            let staleDate = Date().addingTimeInterval(Double(max(Int(remainingSeconds), 60)))
+            let content = ActivityContent(state: contentState, staleDate: staleDate)
             currentActivity = try Activity.request(
                 attributes: attributes,
                 content: content,
@@ -77,7 +79,9 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
             fadeOutMinutes: Int(fadeOutMinutes)
         )
 
-        let content = ActivityContent(state: contentState, staleDate: nil)
+        // Refresh staleDate on each update — if updates stop (app killed), iOS will dismiss
+        let staleDate = Date().addingTimeInterval(60)
+        let content = ActivityContent(state: contentState, staleDate: staleDate)
 
         Task {
             await activity.update(content)
@@ -95,6 +99,18 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
         }
     }
 
+    /// Synchronously ends all Live Activities. Safe to call from applicationWillTerminate.
+    static func endAllActivitiesSync() {
+        let semaphore = DispatchSemaphore(value: 0)
+        Task.detached {
+            for activity in Activity<FocusRitualAttributes>.activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+    }
+
     // MARK: - Private
 
     private func makeContentState(
@@ -108,7 +124,8 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
         totalCycles: Int,
         fadeOutMinutes: Int
     ) -> FocusRitualAttributes.ContentState {
-        .init(
+        let endTimestamp = Date().timeIntervalSince1970 + Double(remainingSeconds)
+        return .init(
             isPaused: isPaused,
             mixSummary: mixSummary,
             activeSoundCount: activeSoundCount,
@@ -117,7 +134,8 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
             phase: phase,
             currentCycle: currentCycle,
             totalCycles: totalCycles,
-            fadeOutMinutes: fadeOutMinutes
+            fadeOutMinutes: fadeOutMinutes,
+            endTimestamp: endTimestamp
         )
     }
 }

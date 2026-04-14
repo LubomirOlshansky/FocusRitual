@@ -12,6 +12,9 @@ enum RitualTokens {
     static let surfaceContainerHigh = Color(hex: 0x1B2027)
     static let surfaceBright        = Color(hex: 0x2A3240)
 
+    /// Live Activity card background — near-black with slight warmth.
+    static let liveActivityBackground = Color(red: 28/255, green: 28/255, blue: 30/255).opacity(0.97)
+
     // MARK: - Content
 
     static let onSurface            = Color(hex: 0xE0E6F1)

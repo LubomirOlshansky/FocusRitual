@@ -12,28 +12,29 @@ struct FocusRitualLiveActivity: Widget {
                 sessionType: context.attributes.sessionType,
                 state: context.state
             )
-            .activityBackgroundTint(RitualTokens.surface)
+            .activityBackgroundTint(RitualTokens.liveActivityBackground)
 
         } dynamicIsland: { context in
             DynamicIsland {
                 // MARK: - Expanded Dynamic Island
                 DynamicIslandExpandedRegion(.leading) {
-                    expandedLeading(
-                        sessionType: context.attributes.sessionType,
-                        state: context.state
-                    )
+                    if context.attributes.sessionType == "ambient" {
+                        ExpandedAmbientLeading()
+                    }
                 }
-                DynamicIslandExpandedRegion(.trailing) {
-                    expandedTrailing(state: context.state)
-                }
+                DynamicIslandExpandedRegion(.trailing) { EmptyView() }
                 DynamicIslandExpandedRegion(.center) {
-                    expandedCenter(
-                        sessionType: context.attributes.sessionType,
-                        state: context.state
-                    )
+                    if context.attributes.sessionType == "ambient" {
+                        ExpandedAmbientCenter(state: context.state)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    expandedBottom(state: context.state)
+                    if context.attributes.sessionType != "ambient" {
+                        expandedContent(
+                            sessionType: context.attributes.sessionType,
+                            state: context.state
+                        )
+                    }
                 }
             } compactLeading: {
                 compactLeading(
@@ -51,7 +52,6 @@ struct FocusRitualLiveActivity: Widget {
                     state: context.state
                 )
             }
-            .contentMargins(.all, 0, for: .expanded)
         }
     }
 
@@ -77,79 +77,17 @@ struct FocusRitualLiveActivity: Widget {
     // MARK: - Dynamic Island: Expanded
 
     @ViewBuilder
-    private func expandedLeading(
+    private func expandedContent(
         sessionType: String,
         state: FocusRitualAttributes.ContentState
     ) -> some View {
         switch sessionType {
         case "focus":
-            // Progress ring + timer
-            ZStack {
-                Circle()
-                    .trim(from: 0, to: state.progress)
-                    .stroke(
-                        RitualTokens.primary.opacity(0.3),
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 44, height: 44)
-
-                Text(state.remainingFormatted)
-                    .font(.system(size: 12, weight: .light))
-                    .foregroundStyle(RitualTokens.onSurface)
-                    .monospacedDigit()
-            }
+            ExpandedFocusView(state: state)
         case "sleep":
-            Text(state.remainingFormatted)
-                .font(.system(size: 16, weight: .ultraLight))
-                .foregroundStyle(RitualTokens.onSurface.opacity(0.85))
-                .monospacedDigit()
+            ExpandedSleepView(state: state)
         default:
             EmptyView()
-        }
-    }
-
-    @ViewBuilder
-    private func expandedTrailing(
-        state: FocusRitualAttributes.ContentState
-    ) -> some View {
-        LiveActivityButton(
-            systemImage: state.isPaused ? "play.fill" : "pause.fill",
-            intent: "togglePause"
-        )
-    }
-
-    @ViewBuilder
-    private func expandedCenter(
-        sessionType: String,
-        state: FocusRitualAttributes.ContentState
-    ) -> some View {
-        VStack(spacing: 2) {
-            switch sessionType {
-            case "ambient":
-                RitualTokens.label("CURRENT MIX")
-                Text(state.mixSummary)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(RitualTokens.onSurface)
-            case "focus":
-                RitualTokens.label("FOCUS SESSION")
-                RitualTokens.caption("\(state.phase) · \(state.cycleLabel)")
-            case "sleep":
-                RitualTokens.label("SLEEP SESSION")
-                RitualTokens.caption(state.fadeOutLabel)
-            default:
-                EmptyView()
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func expandedBottom(
-        state: FocusRitualAttributes.ContentState
-    ) -> some View {
-        if !state.mixSummary.isEmpty {
-            RitualTokens.caption(state.mixSummary)
-                .padding(.top, 4)
         }
     }
 
@@ -162,7 +100,6 @@ struct FocusRitualLiveActivity: Widget {
     ) -> some View {
         switch sessionType {
         case "focus":
-            // Tiny progress arc
             ZStack {
                 Circle()
                     .trim(from: 0, to: state.progress)
@@ -189,10 +126,9 @@ struct FocusRitualLiveActivity: Widget {
     ) -> some View {
         switch sessionType {
         case "focus", "sleep":
-            Text(state.remainingFormatted)
-                .font(.system(size: 12, weight: .light))
-                .foregroundStyle(RitualTokens.onSurface.opacity(0.7))
-                .monospacedDigit()
+            Image(systemName: "stop.fill")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(RitualTokens.onSurfaceVariant.opacity(0.5))
         default:
             // Ambient: pause indicator
             Image(systemName: state.isPaused ? "play.fill" : "pause.fill")

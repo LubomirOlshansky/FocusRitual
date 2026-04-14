@@ -6,15 +6,26 @@ package com.focusritual.app.core.liveactivity
  */
 class LiveActivityController {
 
-    private var isActive = false
+    private var currentSessionType: String? = null
 
     /** Start or update the Live Activity based on the current state. */
     fun push(state: LiveActivityState) {
         val handler = LiveActivityBridge.handler ?: return
 
-        if (!isActive) {
+        val newSessionType = when (state) {
+            is LiveActivityState.AmbientPlayback -> "ambient"
+            is LiveActivityState.FocusActive -> "focus"
+            is LiveActivityState.SleepActive -> "sleep"
+        }
+
+        if (currentSessionType != null && currentSessionType != newSessionType) {
+            handler.endActivity()
+            currentSessionType = null
+        }
+
+        if (currentSessionType == null) {
             start(handler, state)
-            isActive = true
+            currentSessionType = newSessionType
         } else {
             update(handler, state)
         }
@@ -23,9 +34,9 @@ class LiveActivityController {
     /** End the Live Activity. */
     fun stop() {
         val handler = LiveActivityBridge.handler ?: return
-        if (isActive) {
+        if (currentSessionType != null) {
             handler.endActivity()
-            isActive = false
+            currentSessionType = null
         }
     }
 

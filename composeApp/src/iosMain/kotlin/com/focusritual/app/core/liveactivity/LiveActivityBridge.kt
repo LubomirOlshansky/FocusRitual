@@ -46,4 +46,16 @@ interface LiveActivityHandler {
  */
 object LiveActivityBridge {
     var handler: LiveActivityHandler? = null
+
+    /**
+     * Callback invoked when a Live Activity button is tapped.
+     * Set by the composable that owns session/mixer state.
+     * Actions: "togglePause", "stopMix", "endSession"
+     */
+    var onAction: ((String) -> Unit)? = null
+
+    /** Called from Swift when a Darwin notification arrives. */
+    fun handleAction(action: String) {
+        onAction?.invoke(action)
+    }
 }

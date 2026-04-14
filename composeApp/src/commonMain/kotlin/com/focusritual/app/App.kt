@@ -7,10 +7,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.theme.FocusRitualTheme
 import com.focusritual.app.core.liveactivity.LiveActivityEffect
+import com.focusritual.app.feature.mixer.MixerIntent
 import com.focusritual.app.feature.mixer.MixerScreen
 import com.focusritual.app.feature.mixer.MixerViewModel
 import com.focusritual.app.feature.session.FocusSessionScreen
 import com.focusritual.app.feature.session.SessionConfig
+import com.focusritual.app.feature.timer.ActiveSessionIntent
 import com.focusritual.app.feature.timer.ActiveSessionScreen
 import com.focusritual.app.feature.timer.ActiveSessionViewModel
 
@@ -40,6 +42,29 @@ fun App() {
             mixerState = mixerState,
             sessionState = sessionState?.value,
             isSessionActive = activeScreen != null,
+            onTogglePause = {
+                if (activeScreen != null) {
+                    sessionViewModel?.onIntent(ActiveSessionIntent.TogglePause)
+                } else {
+                    mixerViewModel.onIntent(MixerIntent.TogglePlayback)
+                }
+            },
+            onStopMix = {
+                if (mixerState.isPlaying) {
+                    mixerViewModel.onIntent(MixerIntent.TogglePlayback)
+                }
+            },
+            onSkipPhase = {
+                sessionViewModel?.onIntent(ActiveSessionIntent.Skip)
+            },
+            onEndSession = {
+                sessionViewModel?.onIntent(ActiveSessionIntent.Stop)
+                if (mixerState.isPlaying) {
+                    mixerViewModel.onIntent(MixerIntent.TogglePlayback)
+                }
+                sessionKey++
+                currentScreen = AppScreen.Mixer
+            },
         )
 
         Crossfade(
@@ -59,8 +84,10 @@ fun App() {
                     config = screen.config,
                     sessionKey = screen.sessionId,
                     onFinish = {
-                        sessionKey++
-                        currentScreen = AppScreen.Mixer
+                        if (currentScreen is AppScreen.ActiveSession) {
+                            sessionKey++
+                            currentScreen = AppScreen.Mixer
+                        }
                     },
                     onSoundControl = mixerViewModel::setSessionMasterVolume,
                 )
