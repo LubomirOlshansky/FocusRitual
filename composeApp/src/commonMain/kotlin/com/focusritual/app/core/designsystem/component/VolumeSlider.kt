@@ -38,7 +38,6 @@ fun VolumeSlider(
     enabled: Boolean = true,
     liveValue: Float? = null,
 ) {
-    val alpha = if (enabled) 1f else 0.4f
     val trackShape = RoundedCornerShape(4.dp)
     val trackHeight = 4.dp
     val hasLive = liveValue != null && enabled
@@ -50,21 +49,36 @@ fun VolumeSlider(
 
     // Smooth color transition when organic motion toggles on/off
     val trackStartColor by animateColorAsState(
-        targetValue = if (hasLive) {
-            OrganicAccent.copy(alpha = alpha)
+        targetValue = if (!enabled) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
+        } else if (hasLive) {
+            OrganicAccent
         } else {
-            MaterialTheme.colorScheme.primary.copy(alpha = alpha)
+            MaterialTheme.colorScheme.primary
         },
         animationSpec = tween(500),
     )
     val trackEndColor by animateColorAsState(
-        targetValue = if (hasLive) {
-            PrimaryDim.copy(alpha = alpha * 0.85f)
+        targetValue = if (!enabled) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+        } else if (hasLive) {
+            PrimaryDim.copy(alpha = 0.85f)
         } else {
-            PrimaryDim.copy(alpha = alpha)
+            PrimaryDim
         },
         animationSpec = tween(500),
     )
+
+    val thumbColor by animateColorAsState(
+        targetValue = if (enabled) {
+            SecondaryFixedDim
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
+        },
+        animationSpec = tween(300),
+    )
+
+    val inactiveTrackAlpha = if (enabled) 1f else 0.80f
 
     Slider(
         value = value,
@@ -77,7 +91,7 @@ fun VolumeSlider(
                     .size(14.dp)
                     .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(SecondaryFixedDim.copy(alpha = alpha)),
+                    .background(thumbColor),
             )
         },
         track = { sliderState ->
@@ -96,7 +110,7 @@ fun VolumeSlider(
                     .height(trackHeight)
                     .clip(trackShape)
                     .background(
-                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = alpha),
+                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = inactiveTrackAlpha),
                     ),
             ) {
                 Box(

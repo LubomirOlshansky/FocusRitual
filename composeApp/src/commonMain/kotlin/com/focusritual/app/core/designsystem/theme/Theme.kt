@@ -23,6 +23,9 @@ fun FocusRitualTheme(content: @Composable () -> Unit) {
         outlineVariant = OutlineVariant,
         outline = Outline,
         tertiary = Tertiary,
+        primaryFixed = PrimaryDim,
+        secondaryFixed = SecondaryFixedDim,
+        scrim = Scrim,
     )
     MaterialTheme(
         colorScheme = colorScheme,

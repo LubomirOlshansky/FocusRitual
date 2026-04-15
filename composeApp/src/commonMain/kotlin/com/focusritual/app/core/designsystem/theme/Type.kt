@@ -15,6 +15,14 @@ val FocusRitualTypography = Typography(
         fontSize = 56.sp,
         color = Color.Unspecified,
     ),
+    displayMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Light,
+        fontSize = 64.sp,
+        letterSpacing = (-0.03).em,
+        fontFeatureSettings = "\"tnum\"",
+        color = Color.Unspecified,
+    ),
     headlineSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
@@ -29,15 +37,23 @@ val FocusRitualTypography = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Light,
+        fontSize = 15.sp,
+        letterSpacing = (-0.01).em,
+        color = Color.Unspecified,
+    ),
+    labelMedium = TextStyle(
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
+        fontSize = 11.sp,
+        letterSpacing = 0.14.em,
         color = Color.Unspecified,
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 11.sp,
-        letterSpacing = 0.05.em,
+        fontSize = 10.sp,
+        letterSpacing = 0.12.em,
         color = Color.Unspecified,
     ),
 )

@@ -1,6 +1,7 @@
 package com.focusritual.app.feature.mixer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,6 +67,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.AirPlayButton
 import com.focusritual.app.core.designsystem.component.SoundTile
 import com.focusritual.app.feature.about.AboutSheet
+import com.focusritual.app.feature.mixer.model.SoundCategory
+import com.focusritual.app.feature.mixer.model.SoundState
+import com.focusritual.app.feature.mixer.model.displayName
 import focusritual.composeapp.generated.resources.Res
 import focusritual.composeapp.generated.resources.background
 import org.jetbrains.compose.resources.painterResource
@@ -78,8 +83,10 @@ fun MixerScreen(
     viewModel: MixerViewModel = viewModel { MixerViewModel() },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val filteredSounds by viewModel.filteredSounds.collectAsStateWithLifecycle()
     MixerScreenContent(
         uiState = uiState,
+        filteredSounds = filteredSounds,
         onIntent = viewModel::onIntent,
         onStartSession = onStartSession,
     )
@@ -88,6 +95,7 @@ fun MixerScreen(
 @Composable
 private fun MixerScreenContent(
     uiState: MixerUiState,
+    filteredSounds: Map<SoundCategory, List<SoundState>>,
     onIntent: (MixerIntent) -> Unit,
     onStartSession: () -> Unit,
 ) {
@@ -157,19 +165,36 @@ private fun MixerScreenContent(
                     }
                 }
             }
-            items(
-                items = uiState.sounds,
-                key = { it.id },
-            ) { sound ->
-                SoundTile(
-                    state = sound,
-                    onToggle = { onIntent(MixerIntent.ToggleSound(sound.id)) },
-                    onVolumeChange = { volume -> onIntent(MixerIntent.AdjustVolume(sound.id, volume)) },
-                    onToggleOrganicMotion = { onIntent(MixerIntent.ToggleOrganicMotion(sound.id)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 6.dp),
+            // Category pill row
+            item {
+                CategoryPillRow(
+                    selectedCategory = uiState.selectedCategory,
+                    onSelectCategory = { onIntent(MixerIntent.SelectCategory(it)) },
                 )
+            }
+
+            // Grouped sound sections
+            filteredSounds.forEach { (category, sounds) ->
+                item(key = "header_${category.name}") {
+                    SectionHeader(
+                        category = category,
+                        activeCount = sounds.count { it.isEnabled },
+                    )
+                }
+                items(
+                    items = sounds,
+                    key = { it.id },
+                ) { sound ->
+                    SoundTile(
+                        state = sound,
+                        onToggle = { onIntent(MixerIntent.ToggleSound(sound.id)) },
+                        onVolumeChange = { volume -> onIntent(MixerIntent.AdjustVolume(sound.id, volume)) },
+                        onToggleOrganicMotion = { onIntent(MixerIntent.ToggleOrganicMotion(sound.id)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, bottom = 7.dp),
+                    )
+                }
             }
         }
 
@@ -336,8 +361,8 @@ private fun CurrentMixPanel(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.96f),
-                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.93f),
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.97f),
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
                         ),
                     ),
                 )
@@ -346,7 +371,10 @@ private fun CurrentMixPanel(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f),
                     shape = panelShape,
                 )
-                .clickable { onPanelTap() }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onPanelTap() }
                 .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Row(
@@ -357,14 +385,15 @@ private fun CurrentMixPanel(
                     Text(
                         text = "CURRENT MIX",
                         style = MaterialTheme.typography.labelSmall,
-                        letterSpacing = 2.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        letterSpacing = 0.10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.40f),
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = uiState.activeSoundsSummary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Light,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
                     )
                 }
 
@@ -391,13 +420,16 @@ private fun CurrentMixPanel(
                         .background(
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                         )
-                        .clickable { onTogglePlayback() },
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { onTogglePlayback() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = if (uiState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -439,5 +471,125 @@ private fun ImmersiveBackground() {
                     ),
                 ),
         )
+    }
+}
+
+@Composable
+private fun CategoryPillRow(
+    selectedCategory: SoundCategory,
+    onSelectCategory: (SoundCategory) -> Unit,
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 26.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+    ) {
+        items(SoundCategory.entries.size) { index ->
+            val category = SoundCategory.entries[index]
+            CategoryPill(
+                category = category,
+                isSelected = category == selectedCategory,
+                onClick = { onSelectCategory(category) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryPill(
+    category: SoundCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.55f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.38f)
+        },
+        animationSpec = tween(300),
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        } else {
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f)
+        },
+        animationSpec = tween(300),
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.58f)
+        },
+        animationSpec = tween(300),
+    )
+
+    val pillShape = RoundedCornerShape(20.dp)
+
+    Row(
+        modifier = Modifier
+            .height(40.dp)
+            .border(0.5.dp, borderColor, pillShape)
+            .background(bgColor, pillShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { onClick() }
+            .padding(start = 18.dp, end = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isSelected) {
+            Box(
+                Modifier
+                    .size(4.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryFixed,
+                        CircleShape,
+                    ),
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            text = category.displayName,
+            style = MaterialTheme.typography.labelMedium,
+            color = textColor,
+        )
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    category: SoundCategory,
+    activeCount: Int,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 14.dp, bottom = 8.dp, start = 26.dp, end = 26.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = category.displayName.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            letterSpacing = 0.12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.48f),
+        )
+        Spacer(Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f),
+                    RoundedCornerShape(10.dp),
+                )
+                .padding(start = 8.dp, end = 8.dp, top = 3.dp, bottom = 3.dp),
+        ) {
+            Text(
+                text = "$activeCount active",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+            )
+        }
     }
 }

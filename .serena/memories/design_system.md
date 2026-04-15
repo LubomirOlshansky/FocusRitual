@@ -1,68 +1,60 @@
-# FocusRitual — Design System (Cinematic Ambience)
+# FocusRitual — Design System v2
 
 ## Creative Direction: "The Digital Sanctuary"
-A high-end, dimly lit listening room. Intentional asymmetry, tonal depth. 
-Screen = canvas of light and shadow, not a collection of boxes.
+Dark cinematic ambient focus app. Premium, atmospheric, minimal.
 
 ## Color Tokens (Dark theme only)
-
 ### Surfaces
-| Token | Hex | Usage |
-|-------|-----|-------|
-| surface | #0c0e11 | Base layer, screen background |
-| surface_container_lowest | #000000 | Recessed elements |
-| surface_container_low | #111418 | Secondary sections |
-| surface_container | #161a1f | Content areas |
-| surface_container_high | ~#1b2027 | Card backgrounds |
-| surface_container_highest | #20262e | Floating elements |
-| surface_bright | ~#2a3240 | Critical interactive elements |
+Surface=#0c0e11(surface), SurfaceContainerLowest=#000000, SurfaceContainerLow=#111418, SurfaceContainer=#161a1f, SurfaceContainerHigh=#1b2027, SurfaceContainerHighest=#20262e, SurfaceBright=#2a3240
 
 ### Primary
-| Token | Hex | Usage |
-|-------|-----|-------|
-| primary | #b7c8db | Main CTA, active states |
-| primary_container | #384858 | Active card backgrounds |
-| primary_dim | #a9bbcd | Glow effects, gradient endpoints |
+Primary=#b7c8db(primary), PrimaryContainer=#384858(primaryContainer), PrimaryDim=#a9bbcd(primaryFixed)
 
 ### Content
-| Token | Hex | Usage |
-|-------|-----|-------|
-| on_surface | #e0e6f1 | Primary text (warm off-white, NEVER #ffffff) |
-| on_surface_variant | #a5abb6 | Secondary text, subtitles |
-| outline_variant | #424851 | Ghost borders at 15% opacity only |
+OnSurface=#e0e6f1(onSurface), OnSurfaceVariant=#a5abb6(onSurfaceVariant), OutlineVariant=#424851(outlineVariant), Outline=#707680(outline)
 
 ### Accent
-| Token | Hex | Usage |
-|-------|-----|-------|
-| tertiary | #fff8f4 | Warmest white allowed |
-| tertiary_fixed_dim | #efe0d0 | Ambient pulse (10% opacity) |
-| secondary_fixed_dim | ~#8a9bae | Slider thumb |
+Tertiary=#fff8f4(tertiary), TertiaryFixedDim=#efe0d0(not wired), SecondaryFixedDim=#8a9bae(secondaryFixed)
+
+### Scheme mapping fix
+primaryFixed=PrimaryDim, secondaryFixed=SecondaryFixedDim — so feature code never imports Color.kt
+
+## Depth System
+Layer 0=surface(bg), 1=surfaceContainer(inactive cards), 2=surfaceContainerHigh(active cards), 3=surfaceContainerHighest+8dp shadow(floating), 4=surfaceBright+16dp shadow(overlay). Never skip >1 layer.
 
 ## Core Rules
-1. **No-Line Rule:** NO 1px borders. Use tonal surface shifts only.
-2. **Glass Effect:** surface_bright at 60% opacity + layered alpha (no native backdrop-blur in Compose)
-3. **Signature Gradient:** primary → primary_container at 135° for active CTAs
-4. **No Pure White:** Use on_surface (#e0e6f1) or tertiary (#fff8f4), never #ffffff
-5. **300ms Transitions:** All state changes use 300ms cubic-bezier
-6. **Ambient Shadows:** 0px 24px 48px rgba(0,0,0,0.4) for floating elements
-7. **Ghost Borders:** outline_variant at 15% opacity only, never 100%
+1. No Pure White (use onSurface or tertiary)
+2. No Hard Borders (ghost borders: outlineVariant ≤15% alpha)
+3. Glass Effect (surfaceBright@60% + layered alpha)
+4. Signature Gradient (primary→primaryContainer 135°)
+5. 300ms tween for all state changes
+6. Ambient shadows for floating elements
+7. No Ripple (indication=null)
+8. No Divider Lines (spacing ≥7dp)
+9. Theme Tokens Only in feature code
 
 ## Typography
-- Font: System default (Manrope planned, add via composeResources/font/ later)
-- display-lg → displayLarge: 56sp (scene name, wide letter spacing)
-- headline-sm → headlineSmall: 24sp (section headers)
-- title-lg → titleLarge: 22sp (card titles)
-- body-md → bodyMedium: 14sp (general text)
-- label-sm → labelSmall: 11sp + 0.05em letter spacing (subtitles, technical labels)
+displayLarge: 56sp Light 300 (scene name)
+displayMedium: 64sp Light 300, tabular nums (timer countdown)
+headlineSmall: 24sp Normal 400 (section headers)
+titleLarge: 22sp Medium 500 (card titles)
+bodyMedium: 15sp Light 300, -0.01em (sound names)
+labelMedium: 11sp Normal 400, 0.14em (phase labels)
+labelSmall: 10sp Normal 400, 0.12em (category labels, badges)
+
+Weight rules: Light+Normal for mixer UI. Medium for titleLarge only. SemiBold for Hero button only. Never Bold.
 
 ## Component Patterns
-- **PlayButton:** ~96dp circle, glass background, play/pause Material icon, ambient shadow
-- **Sound Tiles:** Semi-transparent surfaceContainerHigh 80% opacity, xl corners (24dp), toggle + volume
-- **ImmersiveBackground:** Dark forest image (`Res.drawable.background`) + vertical gradient overlay (transparent → 0.6 → 0.92 → opaque)
-- **Breathing Circle:** 280dp main circle + 320dp outer ring, scale animation (0.97↔1.03), phase-aware speed (4s focus / 6s break)
-- **Session Timer:** 64sp ExtraLight time display, Crossfade digit transitions, centered in breathing circle
-- **Progress Dots:** Horizontal row of 32×2dp bars, animated fill by cycle progress
-- **Bottom Floating Pill:** RoundedCornerShape(999dp), surfaceBright 60%, skip + stop controls
-- **Ghost Borders:** outline_variant at low alpha only, never solid
-- **Lists:** NO divider lines, separate with 16dp spacing
-- **Spacing:** Use generous void — 112dp+ page margins for cinematic scale
+- **Sound Tile:** surfaceContainerHigh@0.92(active)/surfaceContainer@0.72(inactive), 16dp corners, 0.5dp ghost border(outlineVariant@0.15/0.09), 34dp icon container, name=bodyMedium Light@0.82/0.42, VolumeSlider, 3-state organic icon(0.75/0.30/0f)
+- **Category Pills:** 30dp height, 15dp corners, surfaceBright@0.55(active)/transparent(inactive), onSurface@0.88/onSurfaceVariant@0.55 text, 4dp primaryFixed dot, 0.5dp border
+- **Section Headers:** labelSmall uppercase, onSurfaceVariant@0.30, count badge surfaceContainer@0.50
+- **PlayButton:** 96dp circle, glass surfaceBright, 3 breathing rings, GlowColor radial gradient, 24dp shadow
+- **VolumeSlider:** primary→primaryFixed gradient track, 4dp height, 14dp secondaryFixed thumb, spring organic motion(0.75/200)
+- **Floating Panel:** 18dp corners, surfaceContainerHighest 96→93%, outlineVariant@0.12, 8dp shadow
+
+## Spacing (Spacing object in core/designsystem/theme/Spacing.kt)
+xs=4dp, sm=8dp, md=12dp, lg=16dp, xl=24dp, xxl=32dp
+screenHorizontal=24dp, heroTopPadding=120dp, listBottomPadding=140dp
+tileHorizontal=14dp, tileTop=13dp, tileBottom=12dp, tileBottomMargin=7dp
+sectionHeaderTop=14dp, sectionHeaderBottom=8dp
+pillRowVertical=12dp, pillSpacing=6dp, pillHorizontal=14dp

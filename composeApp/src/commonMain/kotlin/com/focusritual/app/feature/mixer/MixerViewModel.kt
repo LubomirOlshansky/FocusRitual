@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.focusritual.app.core.audio.OrganicMotionEngine
 import com.focusritual.app.core.audio.SoundMixer
 import com.focusritual.app.core.audio.SoundResources
+import com.focusritual.app.feature.mixer.model.SoundCategory
+import com.focusritual.app.feature.mixer.model.SoundState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,6 +35,17 @@ class MixerViewModel : ViewModel() {
             },
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, _uiState.value)
+
+    val filteredSounds: StateFlow<Map<SoundCategory, List<SoundState>>> = uiState.map { state ->
+        val filtered = if (state.selectedCategory == SoundCategory.ALL) state.sounds
+                       else state.sounds.filter { it.category == state.selectedCategory }
+        val grouped = filtered.groupBy { it.category }
+        linkedMapOf<SoundCategory, List<SoundState>>().apply {
+            SoundCategory.entries.filter { it != SoundCategory.ALL }.forEach { cat ->
+                grouped[cat]?.let { put(cat, it) }
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     init {
         loadSoundResources()
@@ -169,6 +183,9 @@ class MixerViewModel : ViewModel() {
                         },
                     ).withDerivedFields()
                 }
+            }
+            is MixerIntent.SelectCategory -> {
+                _uiState.update { it.copy(selectedCategory = intent.category) }
             }
         }
     }
