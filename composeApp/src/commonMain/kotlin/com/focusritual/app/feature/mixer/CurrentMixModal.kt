@@ -3,6 +3,7 @@ package com.focusritual.app.feature.mixer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,6 +55,7 @@ import com.focusritual.app.feature.mixer.model.SoundState
 
 @Composable
 fun CurrentMixModal(
+    isVisible: Boolean,
     uiState: MixerUiState,
     onIntent: (MixerIntent) -> Unit,
     onDismiss: () -> Unit,
@@ -66,9 +68,9 @@ fun CurrentMixModal(
     }
 
     AnimatedVisibility(
-        visible = activeSounds.isNotEmpty(),
-        enter = fadeIn(tween(300)) + slideInVertically(tween(350)) { it / 4 },
-        exit = fadeOut(tween(250)) + slideOutVertically(tween(300)) { it / 4 },
+        visible = isVisible && activeSounds.isNotEmpty(),
+        enter = fadeIn(tween(350)) + slideInVertically(tween(400, easing = FastOutSlowInEasing)) { it },
+        exit = fadeOut(tween(250)) + slideOutVertically(tween(300, easing = FastOutSlowInEasing)) { it },
     ) {
         Box(
             modifier = modifier

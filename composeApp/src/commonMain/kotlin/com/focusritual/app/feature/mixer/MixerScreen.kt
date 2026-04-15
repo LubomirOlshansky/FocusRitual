@@ -210,13 +210,12 @@ private fun MixerScreenContent(
             AboutSheet(onDismiss = { showAboutSheet = false })
         }
 
-        if (showCurrentMixModal) {
-            CurrentMixModal(
-                uiState = uiState,
-                onIntent = onIntent,
-                onDismiss = { showCurrentMixModal = false },
-            )
-        }
+        CurrentMixModal(
+            isVisible = showCurrentMixModal,
+            uiState = uiState,
+            onIntent = onIntent,
+            onDismiss = { showCurrentMixModal = false },
+        )
     }
 }
 
