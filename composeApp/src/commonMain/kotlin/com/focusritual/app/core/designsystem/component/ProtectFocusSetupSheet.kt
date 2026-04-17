@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 expect fun ProtectFocusSetupSheet(
-    isSettingUp: Boolean = false,
+    isSettingUp: Boolean,
     onDismiss: () -> Unit,
     onChooseBlockedApps: () -> Unit,
 )

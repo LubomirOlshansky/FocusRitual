@@ -1,10 +1,19 @@
 package com.focusritual.app
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.FocusRitualTheme
 import com.focusritual.app.core.liveactivity.LiveActivityEffect
 import com.focusritual.app.feature.mixer.MixerIntent
@@ -67,9 +76,72 @@ fun App() {
             },
         )
 
-        Crossfade(
+        AnimatedContent(
             targetState = currentScreen,
-            animationSpec = tween(300),
+            contentAlignment = Alignment.Center,
+            transitionSpec = {
+                val initial = initialState
+                val target = targetState
+                when {
+                    // Mixer -> FocusSession : "A thought surfaces" — rises with weight from beneath
+                    initial is AppScreen.Mixer && target is AppScreen.FocusSession -> {
+                        val enter = slideInVertically(
+                            animationSpec = tween(480, easing = FocusRitualEasing.DeepEaseOut),
+                        ) { (it * 0.22f).toInt() } +
+                            scaleIn(
+                                animationSpec = tween(480, easing = FocusRitualEasing.DeepEaseOut),
+                                initialScale = 0.97f,
+                            ) +
+                            fadeIn(tween(300, delayMillis = 60))
+                        val exit = scaleOut(
+                            animationSpec = tween(400, easing = FocusRitualEasing.Atmospheric),
+                            targetScale = 0.97f,
+                        ) + fadeOut(tween(360, easing = FocusRitualEasing.Atmospheric))
+                        enter togetherWith exit
+                    }
+
+                    // FocusSession -> Mixer : "Dissolves back into the forest" — panel softens, world breathes back
+                    initial is AppScreen.FocusSession && target is AppScreen.Mixer -> {
+                        val enter = scaleIn(
+                            animationSpec = tween(500, easing = FocusRitualEasing.Atmospheric),
+                            initialScale = 1.02f,
+                        ) + fadeIn(tween(420, easing = FocusRitualEasing.Atmospheric))
+                        val exit = scaleOut(
+                            animationSpec = tween(340, easing = FocusRitualEasing.CinematicIn),
+                            targetScale = 0.96f,
+                        ) + fadeOut(tween(280, easing = FocusRitualEasing.CinematicIn))
+                        enter togetherWith exit
+                    }
+
+                    // FocusSession -> ActiveSession : "The ritual begins" — beat of darkness, then presence
+                    initial is AppScreen.FocusSession && target is AppScreen.ActiveSession -> {
+                        val enter = scaleIn(
+                            animationSpec = tween(600, easing = FocusRitualEasing.Ritual),
+                            initialScale = 0.96f,
+                        ) + fadeIn(tween(500, delayMillis = 80))
+                        val exit = fadeOut(tween(300, easing = FocusRitualEasing.CinematicIn))
+                        enter togetherWith exit
+                    }
+
+                    // ActiveSession -> Mixer : "Emerging from depth" — emotional payoff, world expands
+                    initial is AppScreen.ActiveSession && target is AppScreen.Mixer -> {
+                        val enter = scaleIn(
+                            animationSpec = tween(700, easing = FocusRitualEasing.Atmospheric),
+                            initialScale = 1.04f,
+                        ) + fadeIn(tween(600, easing = FocusRitualEasing.Atmospheric))
+                        // ActiveSession already internally fades over ~400ms before onFinish() is called.
+                        // Keep this outer exit short — do not double-fade.
+                        val exit = fadeOut(tween(200))
+                        enter togetherWith exit
+                    }
+
+                    // Fallback — clean, neutral
+                    else ->
+                        fadeIn(tween(300, easing = FocusRitualEasing.Atmospheric)) togetherWith
+                            fadeOut(tween(260, easing = FocusRitualEasing.CinematicIn))
+                }.using(SizeTransform(clip = false))
+            },
+            label = "AppScreenTransition",
         ) { screen ->
             when (screen) {
                 AppScreen.Mixer -> MixerScreen(
