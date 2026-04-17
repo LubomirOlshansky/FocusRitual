@@ -1,9 +1,15 @@
 package com.focusritual.app.feature.timer
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -54,12 +60,21 @@ fun ActiveSessionScreen(
     sessionKey: Int = 0,
     onFinish: () -> Unit,
     onSoundControl: (Float?) -> Unit,
+    onStartAnother: () -> Unit,
     viewModel: ActiveSessionViewModel = viewModel(key = "session_$sessionKey") {
         ActiveSessionViewModel(config)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isExiting by remember { mutableStateOf(false) }
+    var isStartingAnother by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isStartingAnother) {
+        if (isStartingAnother) {
+            delay(450L)
+            onStartAnother()
+        }
+    }
 
     // Sleep fade-out: use config duration when available, fallback to constant
     val sleepFadeOutMs = if (config.mode == SessionMode.Sleep && config.sleepFadeOutMinutes > 0) {
@@ -81,6 +96,7 @@ fun ActiveSessionScreen(
     // Volume logic
     val targetVolume = when {
         isExiting -> 0f
+        isStartingAnother -> 0f
         uiState.isSleepFadingOut -> sleepFade  // fade audio with visual
         uiState.isCompleted -> 0f
         uiState.isPaused -> 0f
@@ -112,14 +128,6 @@ fun ActiveSessionScreen(
         }
     }
 
-    // Focus mode: existing auto-exit on completion
-    if (uiState.isCompleted && !uiState.isSleepMode) {
-        LaunchedEffect(Unit) {
-            delay(2000L)
-            isExiting = true
-        }
-    }
-
     DisposableEffect(Unit) {
         onDispose { onSoundControl(null) }
     }
@@ -127,6 +135,7 @@ fun ActiveSessionScreen(
     ActiveSessionScreenContent(
         uiState = uiState,
         sleepFade = sleepFade,
+        onStartAnother = { isStartingAnother = true },
         onIntent = { intent ->
             when (intent) {
                 ActiveSessionIntent.Stop -> isExiting = true
@@ -140,6 +149,7 @@ fun ActiveSessionScreen(
 private fun ActiveSessionScreenContent(
     uiState: ActiveSessionUiState,
     sleepFade: Float = 1f,
+    onStartAnother: () -> Unit,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     val isSleepFading = uiState.isSleepFadingOut
@@ -164,6 +174,25 @@ private fun ActiveSessionScreenContent(
             )
         }
 
+        AnimatedContent(
+            targetState = uiState.isCompleted && !uiState.isSleepMode,
+            transitionSpec = {
+                if (targetState) {
+                    (fadeIn(tween(600, easing = FocusRitualEasing.Atmospheric)) +
+                        scaleIn(tween(700, easing = FocusRitualEasing.Ritual), initialScale = 0.97f)) togetherWith
+                        fadeOut(tween(400))
+                } else {
+                    fadeIn(tween(300)) togetherWith fadeOut(tween(300))
+                }
+            },
+            label = "sessionComplete",
+        ) { showCompletion ->
+            if (showCompletion) {
+                SessionCompleteScreen(
+                    onReturnToMixer = { onIntent(ActiveSessionIntent.Stop) },
+                    onStartAnother = onStartAnother,
+                )
+            } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -192,6 +221,7 @@ private fun ActiveSessionScreenContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
                             alpha = if (isSleepFading) 0.3f * sleepFade else 0.6f,
                         ),
+                        modifier = Modifier.graphicsLayer { alpha = if (uiState.isCompleted) 0f else 1f },
                     )
 
                     Spacer(Modifier.height(48.dp))
@@ -221,7 +251,9 @@ private fun ActiveSessionScreenContent(
                                         fontFamily = FontFamily.Default,
                                         textAlign = TextAlign.Center,
                                         color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.widthIn(min = 220.dp),
+                                        modifier = Modifier
+                                            .widthIn(min = 220.dp)
+                                            .graphicsLayer { alpha = if (uiState.isCompleted) 0f else 1f },
                                     )
 
                                     Spacer(Modifier.height(16.dp))
@@ -279,6 +311,8 @@ private fun ActiveSessionScreenContent(
             }
 
             Spacer(Modifier.height(16.dp))
+        }
+            }
         }
     }
 }

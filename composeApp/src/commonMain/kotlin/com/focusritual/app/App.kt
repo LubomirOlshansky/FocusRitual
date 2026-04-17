@@ -162,6 +162,12 @@ fun App() {
                         }
                     },
                     onSoundControl = mixerViewModel::setSessionMasterVolume,
+                    onStartAnother = {
+                        if (currentScreen is AppScreen.ActiveSession) {
+                            sessionKey++
+                            currentScreen = AppScreen.FocusSession
+                        }
+                    },
                 )
             }
         }

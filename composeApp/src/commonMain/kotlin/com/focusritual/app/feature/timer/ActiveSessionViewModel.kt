@@ -101,7 +101,9 @@ class ActiveSessionViewModel(private val config: SessionConfig) : ViewModel() {
         }
         when (state.phase) {
             SessionPhase.Focus -> {
-                if (config.breakMinutes > 0) {
+                if (state.currentCycle >= state.totalCycles) {
+                    advanceCycle()
+                } else if (config.breakMinutes > 0) {
                     startPhase(SessionPhase.Break, state.currentCycle)
                 } else {
                     advanceCycle()
