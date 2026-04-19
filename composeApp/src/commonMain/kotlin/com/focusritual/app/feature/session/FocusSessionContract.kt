@@ -11,8 +11,8 @@ data class SessionPreset(
 )
 
 fun defaultPresets() = listOf(
-    SessionPreset("short", "25 min focus / 5 min break", 25, 5, 4),
-    SessionPreset("medium", "50 min focus / 10 min break", 50, 10, 4),
+    SessionPreset("short", "25 min focus · 5 min break", 25, 5, 4),
+    SessionPreset("medium", "50 min focus · 10 min break", 50, 10, 4),
     SessionPreset("long", "90 min deep focus", 90, 0, 1),
 )
 
