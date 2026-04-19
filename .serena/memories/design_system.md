@@ -177,17 +177,48 @@ surfaceContainer@0.60 bg, 0.5dp outlineVariant@0.08, 14dp corner, 13v/14h pad. I
 ### 6.11 DoneButton / EndButton (secondary)
 44dp h, 120dp minWidth, 22dp corner. Bg surfaceContainerHighest@0.80, 0.5dp outlineVariant@0.14. Label 12sp Light 0.08em onSurface@0.55. No ripple.
 
-### 6.12 Session Skip+End controls (Active Session, Focus)
-Outer pill 56dp h, 28dp corner, surfaceContainerHighest@0.80, 0.5dp outlineVariant@0.12, 6dp internal pad. Each button transparent, Column(icon, label). Icon 20dp onSurface@0.55. Label 10sp onSurface@0.35. No ripple.
+### 6.12 Session Skip+End controls (Active Session)
+Outer pill **52dp h, 26dp corner**, surfaceContainerHighest at state alpha (Focus 0.82 / Break 0.72 / Paused 0.65 / Sleep 0.55), 0.5dp outlineVariant at state alpha (0.18 / 0.13 / 0.12 / 0.09), 6dp internal pad. No per-button background. Each button: 76dp w × 44dp h, Column(icon 18dp, 4dp gap, label 10sp Normal 0.08em UPPER). Icon onSurface at state alpha (0.52 / 0.38 / 0.28). Label onSurface at state alpha (0.28 / 0.20 / 0.16). Internal divider: 0.5dp × 18dp Box, outlineVariant at same alpha as pill border. Sleep variant: single "End Sleep" pill, 44dp h, 22dp corner, surfaceContainerHighest@0.55, 0.5dp outlineVariant@0.09, label 11sp Light 0.08em onSurface@0.35 (mixed case). No ripple. (Active Session variant — lighter than Mixer bottom-bar pills because this is the most immersive surface in the app.)
 
 ### 6.13 CloseButton
 28dp Circle, transparent, 0.5dp outlineVariant@0.14. Icon 14dp onSurface@0.38. Position: full screens top-LEFT padding(start=20, top=16); sheets/modals top-RIGHT padding(end=20, top=16). scale(0.95) on press, no ripple.
 
+### 6.16 CycleIndicator (Active Session)
+Column(spacedBy 5dp, centered):
+- Cycle text: "Cycle N of M", 11sp Light 0.01em onSurface at state alpha (Focus 0.40 / Break 0.30 / Paused 0.20). Hidden in Sleep.
+- Row(spacedBy 5dp): N bars, each 16dp w × 2dp h, RoundedCornerShape(2dp).
+  - **Active dot** (i == currentCycle, Focus only): `colorScheme.primary` α 0.65.
+  - **Active dot** (Break / Paused): `colorScheme.onSurface` α 0.42 / 0.25.
+  - **Done dot** (i < currentCycle): onSurface α 0.42 / 0.42 / 0.25 (Focus / Break / Paused).
+  - **Upcoming dot** (i > currentCycle): onSurface α 0.13 / 0.11 / 0.08.
+All alpha transitions `tween(600, FocusRitualEasing.Atmospheric)`. Hidden entirely in Sleep mode.
+
 ### 6.14 CurrentMixPanel (floating bottom)
 Bg surfaceContainerHighest verticalGradient 97%→93%. Top border 0.5dp outlineVariant@0.09. 18dp corner (top only). 8dp shadow. Pad 11t/16h/26b (safe area). "CURRENT MIX" 10sp Normal 0.10em onSurfaceVariant@0.40 UPPER. Mix text 14sp Light onSurface@0.75. Action btn 32dp circle, onSurface@0.06 bg, 0.5dp outlineVariant@0.10, icon onSurface@0.60 14dp. Chevron 22dp onSurface@0.28. No ripple.
 
-### 6.15 AtmosphericField (Active Session — breathing circle w/ timer)
-Outer glow ring ~300dp Circle, radialGradient(primary@0.06 → Transparent); scale 1.0↔1.06, alpha 0.6↔1.0, infiniteRepeatable tween(4000) Reverse. Inner circle ~200dp Circle, radialGradient(surfaceContainerHigh@0.50 → Transparent), 0.5dp outlineVariant@0.12. Timer 64sp Light tabular onSurface@0.88. Pause button (Focus only) 52dp Circle, surfaceContainerHigh@0.80, 0.5dp outlineVariant@0.15, icon onSurface@0.65 20dp. No ripple.
+### 6.15 AtmosphericField (Active Session — breathing orb w/ timer)
+Three concentric layers, all `colorScheme.primary`:
+- **Outer ring** 220dp Circle, 0.5dp primary border. Alpha = `0.10 + b·0.50` (floor 0.10 → peak per state). Scale = `1.0 + b·0.07`.
+- **Mid ring** 175dp Circle, 0.5dp primary border. Alpha = `0.07 + b·0.38`. Scale = `1.0 + b·0.09`.
+- **Glow core** 134dp Circle, radialGradient(primary → Transparent). Alpha = `0.04 + b·0.28`. Scale = `1.0 + b·0.13`.
+
+Where `b = (primaryBreath·0.65 + secondaryBreath·0.35) · intensity`.
+Per-state values:
+| State | intensity | primary ½-cycle | secondary ½-cycle | outer α peak | mid α peak | glow α peak |
+|---|---|---|---|---|---|---|
+| Focus | 1.00 | 4 200ms | 6 800ms | 0.60 | 0.45 | 0.32 |
+| Break | 0.65 | 5 500ms | 8 500ms | 0.42 | 0.32 | 0.22 |
+| Paused | 0.52 | 8 000ms | 14 000ms | 0.36 | 0.27 | 0.19 |
+| Sleep | 0.45 | 9 000ms | 16 000ms | 0.28 | 0.21 | 0.15 |
+
+Both breath oscillators use `infiniteRepeatable(tween(halfCycle, FastOutSlowInEasing), Reverse)`.
+Intensity transitions on state change use `tween(2000, FocusRitualEasing.Atmospheric)`.
+
+**Echo ring (Paused only):** single ripple, 80dp base size, 0.5dp primary border. `infiniteRepeatable(tween(8000, LinearEasing), Restart)`. Scale 0.55 → 1.65 (linear over progress). Alpha envelope: ramp 0→0.16 over progress 0–0.18, hold 0.16 over 0.18–0.62, fade 0.16→0 over 0.62–1.0. **This is the only permitted LinearEasing in any infinite animation in the app** — justified because the ripple represents a physical wavefront, not a UI motion.
+
+**Timer text:** 64sp Light -0.03em onSurface tabular at state alpha (Focus 0.88 / Break 0.70 / Paused 0.50 / Sleep 0.38). Transitions `tween(1500, Atmospheric)`.
+
+**Pause button (Focus / Break / Paused only — hidden in Sleep):** **40dp Circle**, surfaceContainerHigh at state alpha (0.80 / 0.72 / 0.62), 0.5dp outlineVariant@0.18. Icon 16dp onSurface at state alpha (0.65 / 0.50 / 0.48). Pause↔Play swap via `Crossfade(tween(300))`. Bg/icon transitions `tween(400)` / `tween(500)`. Positioned 12dp directly below timer in same vertical column. No ripple. (40dp chosen so the button does not visually compete with the 64sp timer inside a 220dp orb.)
 
 ---
 
@@ -240,7 +271,7 @@ object FocusRitualEasing {
 3. Min fade 260ms (shorter feels like a cut).
 4. Max scale range 0.95–1.04 (beyond = zoom).
 5. `delayMillis` only on entering `fadeIn`, never on scale.
-6. Max delay 100ms.
+6. Max delay 100ms — **exceptions:** Mixer hero arrival ceremony, Active Session arrival ceremony (both stagger up to 440ms across multiple elements as a screen-arrival ritual). New ceremony exceptions must be explicitly added here.
 7. Entering > exiting.
 8. Never stack animations back-to-back without content between them.
 
