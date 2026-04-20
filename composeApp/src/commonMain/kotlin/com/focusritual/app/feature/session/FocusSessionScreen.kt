@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.CloseButton
 import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
-import com.focusritual.app.core.designsystem.component.SessionModeToggle
+import com.focusritual.app.feature.session.ui.SessionModeToggle
 import com.focusritual.app.core.designsystem.component.StartSessionButton
 import com.focusritual.app.core.designsystem.component.StepperRow
 import com.focusritual.app.core.protectfocus.ProtectFocusConfig

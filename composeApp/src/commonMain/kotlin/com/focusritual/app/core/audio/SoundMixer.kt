@@ -1,32 +1,29 @@
 package com.focusritual.app.core.audio
 
-import com.focusritual.app.feature.mixer.model.SoundState
-
-class SoundMixer {
-    private val players = mutableMapOf<String, AudioPlayer>()
+class SoundMixer(private val factory: AudioPlayerFactory = DefaultAudioPlayerFactory) {
+    private val players = mutableMapOf<String, AudioPlayerHandle>()
     private val loadedData = mutableMapOf<String, ByteArray>()
 
     fun cacheAudioData(soundId: String, data: ByteArray) {
         loadedData[soundId] = data
     }
 
-    fun syncState(sounds: List<SoundState>, isPlaying: Boolean, masterVolume: Float = 1f) {
-        for (sound in sounds) {
-            val data = loadedData[sound.id]
-            val player = players[sound.id]
-            val effectiveVolume = sound.volume * masterVolume
+    fun syncState(commands: List<AudioCommand>) {
+        for (cmd in commands) {
+            val data = loadedData[cmd.id]
+            val player = players[cmd.id]
 
-            if (isPlaying && sound.isEnabled && data != null) {
+            if (cmd.enabled && data != null) {
                 if (player == null) {
-                    val newPlayer = AudioPlayer()
-                    players[sound.id] = newPlayer
+                    val newPlayer = factory.create()
+                    players[cmd.id] = newPlayer
                     newPlayer.play(data)
-                    newPlayer.setVolume(effectiveVolume)
+                    newPlayer.setVolume(cmd.volume)
                 } else if (!player.isPlaying) {
                     player.play(data)
-                    player.setVolume(effectiveVolume)
+                    player.setVolume(cmd.volume)
                 } else {
-                    player.setVolume(effectiveVolume)
+                    player.setVolume(cmd.volume)
                 }
             } else {
                 player?.let {
@@ -34,9 +31,9 @@ class SoundMixer {
                         it.stop()
                     }
                 }
-                if (!sound.isEnabled || !isPlaying) {
+                if (!cmd.enabled) {
                     player?.release()
-                    players.remove(sound.id)
+                    players.remove(cmd.id)
                 }
             }
         }

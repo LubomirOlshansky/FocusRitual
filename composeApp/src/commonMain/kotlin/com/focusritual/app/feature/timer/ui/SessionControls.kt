@@ -1,4 +1,4 @@
-package com.focusritual.app.feature.timer
+package com.focusritual.app.feature.timer.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState

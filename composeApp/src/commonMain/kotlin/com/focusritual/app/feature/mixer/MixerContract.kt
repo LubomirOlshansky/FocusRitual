@@ -1,12 +1,11 @@
 package com.focusritual.app.feature.mixer
 
-import com.focusritual.app.feature.mixer.model.SoundCategory
-import com.focusritual.app.feature.mixer.model.SoundState
-import com.focusritual.app.feature.mixer.model.defaultSounds
+import com.focusritual.app.feature.mixer.domain.SoundCategory
+import com.focusritual.app.feature.mixer.domain.SoundState
 
 data class MixerUiState(
     val isPlaying: Boolean = true,
-    val sounds: List<SoundState> = defaultSounds(),
+    val sounds: List<SoundState> = emptyList(),
     val selectedCategory: SoundCategory = SoundCategory.ALL,
     val activeSoundsSummary: String = "",
     val activeSoundCount: Int = 0,

@@ -51,6 +51,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.feature.session.SessionConfig
 import com.focusritual.app.feature.session.SessionMode
 import kotlinx.coroutines.delay
+import com.focusritual.app.feature.timer.ui.AmbientBackgroundPulse
+import com.focusritual.app.feature.timer.ui.AtmosphericField
+import com.focusritual.app.feature.timer.ui.BottomControls
+import com.focusritual.app.feature.timer.ui.ProgressSection
+import com.focusritual.app.feature.timer.ui.SessionTopBar
+import com.focusritual.app.feature.timer.ui.SleepExitButton
+import com.focusritual.app.feature.timer.ui.TimerBackground
 
 private const val SLEEP_FADE_OUT_MS = 30_000L
 

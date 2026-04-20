@@ -1,4 +1,6 @@
-package com.focusritual.app.feature.timer
+package com.focusritual.app.feature.timer.ui
+
+import com.focusritual.app.feature.timer.SessionPhase
 
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode

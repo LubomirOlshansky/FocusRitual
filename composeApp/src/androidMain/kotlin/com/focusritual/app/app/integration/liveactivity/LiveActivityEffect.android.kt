@@ -1,4 +1,4 @@
-package com.focusritual.app.core.liveactivity
+package com.focusritual.app.app.integration.liveactivity
 
 import androidx.compose.runtime.Composable
 import com.focusritual.app.feature.mixer.MixerUiState

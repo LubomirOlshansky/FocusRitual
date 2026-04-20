@@ -1,7 +1,6 @@
 package com.focusritual.app.core.designsystem.component
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -32,9 +31,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.focusritual.app.core.designsystem.theme.GlowColor
+import com.focusritual.app.core.designsystem.theme.OrganicEasing
 
-private val GlowColor = Color(0xFFB7C8DB)
-private val OrganicEasing = CubicBezierEasing(0.3f, 0.0f, 0.15f, 1.0f)
 
 @Composable
 fun PlayButton(

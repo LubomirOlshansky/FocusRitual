@@ -15,7 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.FocusRitualTheme
-import com.focusritual.app.core.liveactivity.LiveActivityEffect
+import com.focusritual.app.app.integration.liveactivity.LiveActivityEffect
 import com.focusritual.app.feature.mixer.MixerIntent
 import com.focusritual.app.feature.mixer.MixerScreen
 import com.focusritual.app.feature.mixer.MixerViewModel

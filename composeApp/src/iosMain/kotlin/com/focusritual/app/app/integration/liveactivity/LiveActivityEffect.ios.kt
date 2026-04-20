@@ -1,4 +1,4 @@
-package com.focusritual.app.core.liveactivity
+package com.focusritual.app.app.integration.liveactivity
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -6,6 +6,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import com.focusritual.app.core.liveactivity.LiveActivityBridge
+import com.focusritual.app.core.liveactivity.LiveActivityController
+import com.focusritual.app.core.liveactivity.LiveActivityState
 import com.focusritual.app.feature.mixer.MixerUiState
 import com.focusritual.app.feature.session.SessionMode
 import com.focusritual.app.feature.timer.ActiveSessionUiState

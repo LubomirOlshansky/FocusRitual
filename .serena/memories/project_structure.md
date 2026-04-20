@@ -1,175 +1,134 @@
 # FocusRitual — Project Structure & Architecture
 
-## Directory Layout
+## Top-Level Layout
 
 ```
-FocusRitual/                         ← Root (Gradle root project)
-├── build.gradle.kts                 ← Root build file (no plugins applied directly)
-├── settings.gradle.kts              ← Includes :composeApp, sets up repositories
-├── gradle.properties                ← Kotlin/Gradle/Android properties
-├── gradle/
-│   ├── libs.versions.toml           ← Version catalog (ALL deps defined here)
-│   └── wrapper/gradle-wrapper.properties
-│
-├── composeApp/                      ← Main shared module (KMP + Compose)
-│   ├── build.gradle.kts             ← KMP plugin config, source sets, Android app config
-│   └── src/
-│       ├── commonMain/
-│       │   ├── kotlin/com/focusritual/app/   ← All shared Kotlin code
-│       │   └── composeResources/
-│       │       ├── drawable/background.png   ← Dark forest background image
-│       │       ├── drawable/compose-multiplatform.xml
-│       │       └── files/*.m4a               ← 9 ambient sound files
-│       │
-│       ├── androidMain/kotlin/com/focusritual/app/
-│       │   ├── MainActivity.kt     ← Android entry point, calls App()
-│       │   ├── Platform.android.kt ← actual fun getPlatform()
-│       │   └── core/audio/
-│       │       ├── AndroidAudioContext.kt  ← Stores Application context for temp files
-│       │       └── AudioPlayer.android.kt ← actual: MediaPlayer + temp file approach
-│       │
-│       └── iosMain/kotlin/com/focusritual/app/
-│           ├── MainViewController.kt ← ComposeUIViewController { App() }
-│           ├── Platform.ios.kt       ← actual fun getPlatform()
-│           └── core/
-│               ├── audio/
-│               │   └── AudioPlayer.ios.kt ← actual: AVAudioPlayer
-│               ├── designsystem/component/
-│               │   ├── AirPlayButton.ios.kt       ← actual: AVRoutePickerView
-│               │   ├── ProtectFocusCard.ios.kt     ← actual: entry row with shield icon
-│               │   └── ProtectFocusSetupSheet.ios.kt ← actual: premium bottom sheet
-│               └── protectfocus/
-│                   ├── ScreenTimeBridge.kt          ← ScreenTimeHandler interface + singleton
-│                   └── ProtectFocusController.ios.kt ← actual: suspendCancellableCoroutine → bridge
-│
-└── iosApp/                          ← iOS Xcode project (thin SwiftUI wrapper)
-    ├── Configuration/Config.xcconfig
-    ├── iosApp/
-    │   ├── iOSApp.swift             ← @main SwiftUI App, registers ScreenTimeBridge
-    │   ├── ContentView.swift        ← UIViewControllerRepresentable bridging to Compose
-    │   ├── ScreenTimeManager.swift  ← FamilyControls auth + FamilyActivityPicker (Swift-only APIs)
-    │   └── Info.plist
-    └── iosApp.xcodeproj/            ← Xcode project files
+FocusRitual/
+├── build.gradle.kts, settings.gradle.kts, gradle.properties
+├── gradle/libs.versions.toml            ← version catalog (all deps here)
+├── composeApp/                          ← KMP + Compose shared module
+│   └── src/{commonMain,androidMain,iosMain,commonTest}/kotlin/com/focusritual/app/
+├── iosApp/                              ← SwiftUI host + FocusRitualWidget extension
+├── docs/                                ← living architecture docs
+└── plans/                               ← refactor/feature plans
 ```
 
-## commonMain Source Tree
+## `com.focusritual.app` — Four Top-Level Groups
 
+Post structure-refactor (plans/structure-refactor.md). **Strict layer direction: `app/` → `feature/` → `core/`.**
+
+### Root (commonMain only)
+- `App.kt` — root composable, `AppScreen` navigation via `Crossfade`
+- `Platform.kt` — expect/actual platform interface
+
+### `app/integration/` — multi-feature glue
+Explicit home for code that legitimately spans multiple features.
+- `app/integration/liveactivity/`
+  - `LiveActivityEffect.kt` (commonMain, `expect`)
+  - `LiveActivityEffect.ios.kt` (iosMain actual)
+  - `LiveActivityEffect.android.kt` (androidMain actual — note `.android.kt` suffix, D5 of plan)
+
+### `core/` — platform infra + design system (no `feature/` imports allowed)
+- `core/audio/` — `AudioCommand`, `AudioPlayer` (expect), `AudioPlayerFactory`, `AudioPlayerHandle`, `OrganicMotionEngine`, `SoundMixer`
+  - androidMain: `AudioPlayer.android.kt`, `AndroidAudioContext.kt`, `FocusAudioService.kt`
+  - iosMain: `AudioPlayer.ios.kt`
+- `core/designsystem/`
+  - `theme/` — `Color`, `Type`, `Theme`, `Spacing`, `Motion`
+  - `component/` — `AirPlayButton`, `CloseButton`, `PlayButton`, `ProtectFocusCard`, `ProtectFocusSetupSheet`, `StartSessionButton`, `StepperRow`, `VolumeSlider` (iOS/Android actuals per-platform)
+- `core/protectfocus/` — `ProtectFocusContract`, `ProtectFocusController` (expect); iosMain: `ScreenTimeBridge`, `MockScreenTimeHandler`, `ProtectFocusController.ios.kt`
+- `core/liveactivity/` *(iosMain only)* — pure platform infra: `LiveActivityBridge`, `LiveActivityController`, `LiveActivityState`. (The cross-feature **effect** lives under `app/integration/`.)
+
+### `feature/` — user-facing features
+
+**Canonical feature shape (D1 of plan):**
 ```
-com/focusritual/app/
-├── App.kt                          ← Root composable: AppScreen navigation via Crossfade
-├── Platform.kt                     ← expect/actual platform interface
-│
-├── core/
-│   ├── audio/
-│   │   ├── AudioPlayer.kt          ← expect class: play(ByteArray), stop(), setVolume(), release(), isPlaying
-│   │   ├── SoundResources.kt       ← Maps sound IDs → Compose resource paths
-│   │   └── SoundMixer.kt           ← Orchestrates multiple AudioPlayers, syncState(sounds, isPlaying, masterVolume)
-│   │
-│   ├── designsystem/
-│   │   ├── theme/
-│   │   │   ├── Color.kt            ← 17 color tokens (dark palette incl. Outline)
-│   │   │   ├── Type.kt             ← FocusRitualTypography (5 text styles, system font)
-│   │   │   └── Theme.kt            ← FocusRitualTheme wrapping MaterialTheme with darkColorScheme
-│   │   └── component/
-│   │       ├── PlayButton.kt       ← Reusable 96dp circular glassmorphic play/pause button
-│   │       ├── AirPlayButton.kt    ← expect/actual: iOS AirPlay route picker
-│   │       ├── ProtectFocusCard.kt ← expect/actual: entry row on session screen
-│   │       ├── ProtectFocusSetupSheet.kt ← expect/actual: premium bottom sheet (isSettingUp param)
-│   │       ├── SoundTile.kt        ← Sound toggle tile
-│   │       └── VolumeSlider.kt     ← Volume slider component
-│   │
-│   └── protectfocus/
-│       ├── ProtectFocusContract.kt  ← ProtectFocusState + SetupResult sealed interfaces
-│       └── ProtectFocusController.kt ← expect class: suspend requestSetup() → SetupResult
-│
-└── feature/
-    ├── mixer/
-    │   ├── MixerContract.kt        ← MixerUiState + MixerIntent (MVI contract)
-    │   ├── MixerViewModel.kt       ← ViewModel: SoundMixer owner, session volume control, audio resource loading
-    │   ├── MixerScreen.kt          ← MixerScreen (stateful) + MixerScreenContent (stateless) + ImmersiveBackground
-    │   └── model/
-    │       └── SoundState.kt       ← SoundState data class + SoundIcon enum + defaultSounds()
-    │
-    ├── session/
-    │   ├── FocusSessionContract.kt ← SessionPreset, FocusSessionUiState, FocusSessionIntent, SessionConfig
-    │   ├── FocusSessionViewModel.kt← ViewModel: preset selection, custom adjustments, resolveConfig()
-    │   └── FocusSessionScreen.kt   ← FocusSessionScreen (stateful) + FocusSessionScreenContent (stateless)
-    │
-    └── timer/
-        ├── ActiveSessionContract.kt ← SessionPhase enum (Focus/Break), ActiveSessionUiState, ActiveSessionIntent
-        ├── ActiveSessionViewModel.kt← Timer: coroutine countdown, phase/cycle management, pause/skip/stop
-        └── ActiveSessionScreen.kt   ← ActiveSessionScreen + immersive timer UI (breathing circle, progress dots, controls)
+<Feature>Contract.kt        ← UiState + Intent
+<Feature>ViewModel.kt
+<Feature>Screen.kt          ← stateful + stateless split
+ui/                         ← sub-composables (optional `ui/modal/`)
+domain/                     ← models, repos, mappers, orchestrators, contracts
+  usecase/                  ← single-responsibility use cases
+data/                       ← persistence/network (none exist today)
 ```
+
+**Features:**
+- `feature/about/` — flat: `AboutSheet.kt`, `SoundCredit.kt`
+- `feature/mixer/`
+  - root: `MixerContract`, `MixerViewModel`, `MixerScreen`, `CurrentMixModal`
+  - `ui/`: `CategoryPillRow`, `CurrentMixPanel`, `HeroSessionButton`, `ImmersiveBackground`, `SectionHeader`, `SoundTile`
+  - `ui/modal/`: `ActiveSoundRow`, `DoneButton`, `GlobalOrganicMotionRow`, `ModalHeader`
+  - `domain/`: `MixAudioOrchestrator`, `MixRepository`, `MixerDtos`, `MixerMappers`, `SoundCatalog`, `SoundCatalogImpl`, `SoundState`
+  - `domain/usecase/`: 7 use cases (Adjust/Remove/SelectCategory/ToggleGlobalOrganicMotion/ToggleOrganicMotion/TogglePlayback/ToggleSound)
+- `feature/session/`
+  - root: `FocusSessionContract`, `FocusSessionViewModel`, `FocusSessionScreen`, `SessionPreferences`
+  - `ui/`: `SessionModeToggle`
+- `feature/timer/`
+  - root: `ActiveSessionContract`, `ActiveSessionViewModel`, `ActiveSessionScreen`, `SessionCompleteScreen`
+  - `ui/`: `AtmosphericField`, `SessionBackground`, `SessionControls`
+
+### Platform entry points (source-set roots)
+- androidMain: `MainActivity.kt`, `Platform.android.kt`
+- iosMain: `MainViewController.kt`, `Platform.ios.kt`
+
+## Layer Invariant (enforced)
+- **`core/` must NOT import `feature/`.** Verified via grep across all three source sets.
+- **`feature/` must NOT import from another `feature/`.**
+- Cross-feature glue lives in `app/integration/` only.
+- Platform actuals use `<Name>.<platform>.kt` suffix (`.ios.kt`, `.android.kt`).
 
 ## Architecture
 
 ### Navigation
-- **No navigation library** — state-based routing in App.kt
-- `AppScreen` sealed interface: `Mixer`, `FocusSession`, `ActiveSession(config: SessionConfig)`
-- `Crossfade(tween(300))` transitions between screens
-- MixerViewModel is hoisted in App.kt and shared across screen transitions for audio continuity
+- No nav library — `AppScreen` sealed interface in `App.kt` + `Crossfade(tween(300))`.
+- `MixerViewModel` hoisted in `App.kt` and shared across screens for audio continuity.
 
-### MVI Pattern (all features)
-- **State:** Data class with defaults, exposed via `StateFlow`
-- **Intent:** Sealed interface, each action is a `data object` or `data class`
-- **ViewModel:** Extends `ViewModel()`, exposes `val uiState: StateFlow<UiState>`, single `fun onIntent(intent)`
-- **Screen split:** Stateful composable (owns/receives ViewModel, collects state) + Stateless content
+### MVI (all features)
+- `UiState` data class exposed via `StateFlow`
+- `Intent` sealed interface (each action = `data object`/`data class`)
+- `ViewModel` exposes `val uiState: StateFlow<UiState>` + single `fun onIntent(intent)`
+- Screen split: stateful `<Feature>Screen(viewModel)` + stateless `<Feature>ScreenContent(uiState, onIntent)`
 
-### Audio Architecture
-- `AudioPlayer` — expect/actual: play(ByteArray), stop(), setVolume(Float), release(), isPlaying
-  - Android: MediaPlayer + temp file
-  - iOS: AVAudioPlayer
-- `SoundMixer` — manages map of AudioPlayers per sound ID
-  - `syncState(sounds, isPlaying, masterVolume)` — declarative sync of UI state to playback
-  - `masterVolume` parameter enables session-aware volume fade (1.0 = full, 0.0 = silent)
-- `MixerViewModel` — owns SoundMixer, loads audio resources, provides `setSessionMasterVolume(Float?)`
-  - `null` = mixer controls playback normally (user toggle)
-  - `Float` (0..1) = session overrides playback (Focus=1, Break=0, with animated fade)
-  - Uses `combine(_uiState, _sessionMasterVolume)` for reactive sync
+### Audio
+- `AudioPlayer` expect/actual (Android: MediaPlayer+temp file; iOS: AVAudioPlayer)
+- `SoundMixer.syncState(sounds, isPlaying, masterVolume)` — declarative sync
+- `MixerViewModel` exposes `setSessionMasterVolume(Float?)` for session-aware fade
+- `combine(_uiState, _sessionMasterVolume)` drives reactive playback
 
 ### Sound-Session Integration
-- `ActiveSessionScreen` receives `onSoundControl: (Float?) -> Unit` callback
-- Phase-based volume: Focus → 1f, Break → 0f, Paused → 0f, Exiting → 0f
-- `animateFloatAsState(tween(400))` provides smooth fade transitions
-- `DisposableEffect` ensures `onSoundControl(null)` on composition exit (releases session control)
-- Session exit uses `isExiting` flag → fade-out animation → then `onFinish()` navigation
+- `ActiveSessionScreen` receives `onSoundControl: (Float?) -> Unit`
+- Phase volume: Focus=1f, Break/Paused/Exiting=0f, with `animateFloatAsState(tween(400))`
+- `DisposableEffect` restores `onSoundControl(null)` on exit
 
-### Protect Focus (iOS-only Screen Time blocking)
-- **Bridge pattern** for Swift-only FamilyControls APIs (not @objc, can't call from Kotlin/Native)
-- `ScreenTimeHandler` — Kotlin interface in iosMain, compiles to ObjC @protocol
-- `ScreenTimeBridge` — Kotlin object singleton, holds `handler: ScreenTimeHandler?`
-- `ScreenTimeManager.swift` — Swift class conforming to ScreenTimeHandler, uses AuthorizationCenter + FamilyActivityPicker
-- Registered at app startup: `ScreenTimeBridge.shared.handler = ScreenTimeManager()` in iOSApp.swift
-- `ProtectFocusController` — expect/actual class, iOS actual uses `suspendCancellableCoroutine` to bridge callbacks → coroutine
-- **State machine** in FocusSessionScreenContent: `ProtectFocusState` (Idle → SheetOpen → SettingUp → SetupCompleted/Cancelled/PermissionDenied)
-- CTA disables (alpha dim) while `SettingUp`, native picker covers the sheet
+### Protect Focus (iOS Screen Time)
+- Bridge pattern: Kotlin `ScreenTimeHandler` interface (iosMain, → ObjC `@protocol`) + `ScreenTimeBridge` singleton
+- `ScreenTimeManager.swift` conforms and registers at app startup
+- `ProtectFocusController` expect class; iOS actual uses `suspendCancellableCoroutine`
+- State machine: `Idle → SheetOpen → SettingUp → SetupCompleted/Cancelled/PermissionDenied`
 
-### Screen Flow
+### Live Activity (iOS)
+- Platform infra in `iosMain core/liveactivity/` (Bridge/Controller/State)
+- Cross-feature driver in `commonMain app/integration/liveactivity/LiveActivityEffect.kt` (reads `MixerUiState` + `ActiveSessionUiState` + `SessionMode`)
+- Android actual is a no-op stub
+
+## Screen Flow
 ```
 MixerScreen → FocusSessionScreen → ActiveSessionScreen
      ↑              ↑                      │
-     │              │                      │ (onFinish)
-     └──────────────┴──────────────────────┘
+     └──────────────┴─────── onFinish ─────┘
 ```
 
 ## Source Set Rules
-
-| Code Type | Source Set |
-|-----------|-----------|
-| UI (Composables) | commonMain |
-| Business logic / ViewModels | commonMain |
-| Data models | commonMain |
-| Theme / design system | commonMain |
-| Audio playback (AudioPlayer actual) | androidMain / iosMain |
-| Platform APIs | expect in commonMain, actual in androidMain/iosMain |
-| Android-only (Activity, Context) | androidMain |
-| iOS-only (UIKit interop) | iosMain |
+| Code | Source Set |
+|------|-----------|
+| UI, ViewModels, models, design system | commonMain |
+| Audio actuals, platform APIs (actual) | androidMain / iosMain |
+| Android-only (Activity, Context, Service) | androidMain |
+| iOS-only (UIKit interop, Live Activity bridge, ScreenTime bridge) | iosMain |
 
 ## Entry Points
-- **Android:** `MainActivity.onCreate()` → `setContent { App() }`
-- **iOS:** `MainViewController()` → `ComposeUIViewController { App() }`
-- **App.kt:** `FocusRitualTheme { Crossfade(AppScreen) { ... } }`
+- Android: `MainActivity.onCreate()` → `setContent { App() }`
+- iOS: `MainViewController()` → `ComposeUIViewController { App() }`
 
 ## Resources
-- **Background:** `composeResources/drawable/background.png` — dark forest, accessed via `Res.drawable.background`
-- **Audio:** 9 `.m4a` files in `composeResources/files/` — rain, wind, fire, birds, waves, stream, thunder, cafe, night
+- `composeResources/drawable/background.png`
+- `composeResources/files/*.m4a` — 9 ambient sounds

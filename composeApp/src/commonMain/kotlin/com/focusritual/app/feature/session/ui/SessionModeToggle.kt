@@ -1,4 +1,4 @@
-package com.focusritual.app.core.designsystem.component
+package com.focusritual.app.feature.session.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween

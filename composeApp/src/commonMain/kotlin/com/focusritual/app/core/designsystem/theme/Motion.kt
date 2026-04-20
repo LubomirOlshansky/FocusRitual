@@ -2,6 +2,8 @@ package com.focusritual.app.core.designsystem.theme
 
 import androidx.compose.animation.core.CubicBezierEasing
 
+import androidx.compose.ui.graphics.Color
+
 object FocusRitualEasing {
     // Deep ease-out — starts fast, settles slowly into place. Premium feel.
     val DeepEaseOut = CubicBezierEasing(0.16f, 1.0f, 0.30f, 1.0f)
@@ -15,3 +17,7 @@ object FocusRitualEasing {
     // Ritual — asymmetric. Snaps in gently, hangs in the air. Session start only.
     val Ritual = CubicBezierEasing(0.22f, 1.0f, 0.36f, 1.0f)
 }
+
+// Shared motion tokens used by hero/play buttons and other ambient surfaces.
+val GlowColor = Color(0xFFB7C8DB)
+val OrganicEasing = CubicBezierEasing(0.3f, 0.0f, 0.15f, 1.0f)

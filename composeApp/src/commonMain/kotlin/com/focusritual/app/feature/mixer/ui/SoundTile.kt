@@ -1,5 +1,6 @@
-package com.focusritual.app.core.designsystem.component
+package com.focusritual.app.feature.mixer.ui
 
+import com.focusritual.app.core.designsystem.component.VolumeSlider
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -40,24 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.focusritual.app.feature.mixer.model.SoundIcon
-import com.focusritual.app.feature.mixer.model.SoundState
-
-fun SoundIcon.toImageVector(): ImageVector = when (this) {
-    SoundIcon.Rain -> Icons.Filled.WaterDrop
-    SoundIcon.Thunder -> Icons.Filled.Thunderstorm
-    SoundIcon.Wind -> Icons.Filled.Air
-    SoundIcon.Forest -> Icons.Filled.Forest
-    SoundIcon.Stream -> Icons.Filled.Water
-    SoundIcon.Cafe -> Icons.Filled.LocalCafe
-    SoundIcon.Fireplace -> Icons.Filled.Fireplace
-    SoundIcon.BrownNoise -> Icons.Filled.GraphicEq
-    SoundIcon.Waves -> Icons.Filled.Water
-}
+import com.focusritual.app.feature.mixer.domain.SoundState
 
 @Composable
 fun SoundTile(
@@ -135,7 +122,7 @@ fun SoundTile(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = state.icon.toImageVector(),
+                        imageVector = state.icon,
                         contentDescription = state.name,
                         modifier = Modifier.size(17.dp),
                         tint = iconTint,

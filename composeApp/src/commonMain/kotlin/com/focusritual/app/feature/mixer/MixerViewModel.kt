@@ -2,72 +2,83 @@ package com.focusritual.app.feature.mixer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.focusritual.app.core.audio.OrganicMotionEngine
-import com.focusritual.app.core.audio.SoundMixer
-import com.focusritual.app.core.audio.SoundResources
-import com.focusritual.app.feature.mixer.model.SoundCategory
-import com.focusritual.app.feature.mixer.model.SoundState
+import com.focusritual.app.feature.mixer.domain.MixRepository
+import com.focusritual.app.feature.mixer.domain.SoundCatalog
+import com.focusritual.app.feature.mixer.domain.SoundCatalogImpl
+import com.focusritual.app.feature.mixer.domain.MixAudioOrchestrator
+import com.focusritual.app.feature.mixer.domain.groupActiveSounds
+import com.focusritual.app.feature.mixer.domain.summarizeActiveMix
+import com.focusritual.app.feature.mixer.domain.usecase.AdjustVolumeUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.RemoveFromMixUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.SelectCategoryUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.ToggleGlobalOrganicMotionUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.ToggleOrganicMotionUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.TogglePlaybackUseCase
+import com.focusritual.app.feature.mixer.domain.usecase.ToggleSoundUseCase
+import com.focusritual.app.feature.mixer.domain.SoundCategory
+import com.focusritual.app.feature.mixer.domain.SoundState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import focusritual.composeapp.generated.resources.Res
 
-class MixerViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(MixerUiState())
+class MixerViewModel(
+    catalog: SoundCatalog = SoundCatalogImpl(),
+    private val repo: MixRepository = MixRepository(catalog),
+    private val orchestrator: MixAudioOrchestrator = MixAudioOrchestrator(catalog),
+    private val toggleSound: ToggleSoundUseCase = ToggleSoundUseCase(repo),
+    private val adjustVolume: AdjustVolumeUseCase = AdjustVolumeUseCase(repo),
+    private val toggleOrganicMotion: ToggleOrganicMotionUseCase = ToggleOrganicMotionUseCase(repo),
+    private val removeFromMix: RemoveFromMixUseCase = RemoveFromMixUseCase(repo),
+    private val toggleGlobalOrganic: ToggleGlobalOrganicMotionUseCase = ToggleGlobalOrganicMotionUseCase(repo),
+) : ViewModel() {
 
-    private val soundMixer = SoundMixer()
-    private val organicEngine = OrganicMotionEngine(viewModelScope)
+    private val _isPlaying = MutableStateFlow(true)
+    private val _selectedCategory = MutableStateFlow(SoundCategory.ALL)
     private val _sessionMasterVolume = MutableStateFlow<Float?>(null)
 
+    private val togglePlayback = TogglePlaybackUseCase(_isPlaying)
+    private val selectCategory = SelectCategoryUseCase(_selectedCategory)
+
     val uiState: StateFlow<MixerUiState> = combine(
-        _uiState,
-        organicEngine.offsets,
-    ) { state, offsets ->
-        if (offsets.isEmpty()) state
-        else state.copy(
-            sounds = state.sounds.map { sound ->
-                sound.copy(liveVolume = offsets[sound.id])
-            },
+        repo.state,
+        _isPlaying,
+        _selectedCategory,
+        orchestrator.offsets,
+    ) { sounds, isPlaying, category, offsets ->
+        val withLive = if (offsets.isEmpty()) sounds
+                       else sounds.map { it.copy(liveVolume = offsets[it.id]) }
+        val summary = summarizeActiveMix(withLive, isPlaying)
+        MixerUiState(
+            isPlaying = isPlaying,
+            sounds = withLive,
+            selectedCategory = category,
+            activeSoundsSummary = summary.activeSoundsSummary,
+            activeSoundCount = summary.activeSoundCount,
         )
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, _uiState.value)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MixerUiState())
 
     val filteredSounds: StateFlow<Map<SoundCategory, List<SoundState>>> = uiState.map { state ->
-        val filtered = if (state.selectedCategory == SoundCategory.ALL) state.sounds
-                       else state.sounds.filter { it.category == state.selectedCategory }
-        val grouped = filtered.groupBy { it.category }
-        linkedMapOf<SoundCategory, List<SoundState>>().apply {
-            SoundCategory.entries.filter { it != SoundCategory.ALL }.forEach { cat ->
-                grouped[cat]?.let { put(cat, it) }
-            }
-        }
+        groupActiveSounds(state.sounds, state.selectedCategory).byCategory
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     init {
-        loadSoundResources()
-        _uiState.update { it.withDerivedFields() }
-        viewModelScope.launch {
-            combine(
-                _uiState,
-                _sessionMasterVolume,
-                organicEngine.offsets,
-            ) { state, sessionVolume, offsets ->
-                val adjustedSounds = state.sounds.map { sound ->
-                    val effectiveVolume = offsets[sound.id] ?: sound.volume
-                    sound.copy(volume = effectiveVolume)
-                }
-                Triple(
-                    adjustedSounds,
-                    if (sessionVolume != null) sessionVolume > 0.01f else state.isPlaying,
-                    sessionVolume ?: 1f,
-                )
-            }.collect { (sounds, isPlaying, masterVolume) ->
-                soundMixer.syncState(sounds, isPlaying, masterVolume)
-            }
+        viewModelScope.launch { orchestrator.loadAll() }
+        orchestrator.start(viewModelScope, repo.state, _isPlaying, _sessionMasterVolume)
+    }
+
+    fun onIntent(intent: MixerIntent) {
+        when (intent) {
+            MixerIntent.TogglePlayback -> togglePlayback()
+            is MixerIntent.ToggleSound -> toggleSound(intent.soundId)
+            is MixerIntent.AdjustVolume -> adjustVolume(intent.soundId, intent.volume)
+            is MixerIntent.ToggleOrganicMotion -> toggleOrganicMotion(intent.soundId)
+            is MixerIntent.RemoveFromMix -> removeFromMix(intent.soundId)
+            MixerIntent.ToggleGlobalOrganicMotion -> toggleGlobalOrganic()
+            is MixerIntent.SelectCategory -> selectCategory(intent.category)
         }
     }
 
@@ -75,135 +86,8 @@ class MixerViewModel : ViewModel() {
         _sessionMasterVolume.value = volume
     }
 
-    private fun loadSoundResources() {
-        viewModelScope.launch {
-            for (sound in _uiState.value.sounds) {
-                val path = SoundResources.getResourcePath(sound.id) ?: continue
-                try {
-                    val bytes = Res.readBytes(path)
-                    soundMixer.cacheAudioData(sound.id, bytes)
-                } catch (_: Exception) {
-                    // Sound file not available — skip silently
-                }
-            }
-        }
-    }
-
-    fun onIntent(intent: MixerIntent) {
-        when (intent) {
-            MixerIntent.TogglePlayback -> {
-                _uiState.update { it.copy(isPlaying = !it.isPlaying).withDerivedFields() }
-            }
-            is MixerIntent.ToggleSound -> {
-                _uiState.update { state ->
-                    state.copy(
-                        sounds = state.sounds.map { sound ->
-                            if (sound.id == intent.soundId) {
-                                val newEnabled = !sound.isEnabled
-                                if (!newEnabled) {
-                                    organicEngine.disable(sound.id)
-                                } else if (sound.organicMotion) {
-                                    organicEngine.enable(sound.id, sound.volume)
-                                }
-                                sound.copy(isEnabled = newEnabled)
-                            } else {
-                                sound
-                            }
-                        },
-                    ).withDerivedFields()
-                }
-            }
-            is MixerIntent.AdjustVolume -> {
-                _uiState.update { state ->
-                    state.copy(
-                        sounds = state.sounds.map { sound ->
-                            if (sound.id == intent.soundId) {
-                                val clamped = intent.volume.coerceIn(0f, 1f)
-                                if (sound.organicMotion) {
-                                    organicEngine.updateBase(sound.id, clamped)
-                                }
-                                sound.copy(volume = clamped)
-                            } else {
-                                sound
-                            }
-                        },
-                    ).withDerivedFields()
-                }
-            }
-            is MixerIntent.ToggleOrganicMotion -> {
-                _uiState.update { state ->
-                    state.copy(
-                        sounds = state.sounds.map { sound ->
-                            if (sound.id == intent.soundId) {
-                                val newEnabled = !sound.organicMotion
-                                if (newEnabled && sound.isEnabled) {
-                                    organicEngine.enable(sound.id, sound.volume)
-                                } else {
-                                    organicEngine.disable(sound.id)
-                                }
-                                sound.copy(organicMotion = newEnabled)
-                            } else {
-                                sound
-                            }
-                        },
-                    ).withDerivedFields()
-                }
-            }
-            is MixerIntent.RemoveFromMix -> {
-                _uiState.update { state ->
-                    state.copy(
-                        sounds = state.sounds.map { sound ->
-                            if (sound.id == intent.soundId) {
-                                organicEngine.disable(sound.id)
-                                sound.copy(isEnabled = false)
-                            } else {
-                                sound
-                            }
-                        },
-                    ).withDerivedFields()
-                }
-            }
-            MixerIntent.ToggleGlobalOrganicMotion -> {
-                _uiState.update { state ->
-                    val activeSounds = state.sounds.filter { it.isEnabled }
-                    val anyOrganicOn = activeSounds.any { it.organicMotion }
-                    state.copy(
-                        sounds = state.sounds.map { sound ->
-                            if (sound.isEnabled) {
-                                if (anyOrganicOn) {
-                                    organicEngine.disable(sound.id)
-                                    sound.copy(organicMotion = false)
-                                } else {
-                                    organicEngine.enable(sound.id, sound.volume)
-                                    sound.copy(organicMotion = true)
-                                }
-                            } else {
-                                sound
-                            }
-                        },
-                    ).withDerivedFields()
-                }
-            }
-            is MixerIntent.SelectCategory -> {
-                _uiState.update { it.copy(selectedCategory = intent.category) }
-            }
-        }
-    }
-
-    private fun MixerUiState.withDerivedFields(): MixerUiState {
-        val enabled = sounds.filter { it.isEnabled }
-        val count = enabled.size
-        val summary = when {
-            count == 0 -> ""
-            count <= 2 -> enabled.joinToString(" • ") { it.name }
-            else -> enabled.take(2).joinToString(" • ") { it.name } + " • +${count - 2}"
-        }
-        return copy(activeSoundsSummary = summary, activeSoundCount = count)
-    }
-
     override fun onCleared() {
         super.onCleared()
-        organicEngine.release()
-        soundMixer.release()
+        orchestrator.release()
     }
 }

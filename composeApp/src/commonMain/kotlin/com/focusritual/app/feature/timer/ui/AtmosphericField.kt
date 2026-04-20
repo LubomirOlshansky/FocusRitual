@@ -1,4 +1,6 @@
-package com.focusritual.app.feature.timer
+package com.focusritual.app.feature.timer.ui
+
+import com.focusritual.app.feature.timer.SessionPhase
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -24,12 +26,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.focusritual.app.core.designsystem.theme.OrganicEasing
 
 private val SurfaceContainer = Color(0xFF161A1F)
 private val OutlineVariant = Color(0xFF424851)
 private val Primary = Color(0xFFB7C8DB)
 
-private val OrganicEasing = CubicBezierEasing(0.3f, 0.0f, 0.15f, 1.0f)
 private val DriftEasing = CubicBezierEasing(0.4f, 0.0f, 0.6f, 1.0f)
 
 @Composable
