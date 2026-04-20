@@ -1,7 +1,7 @@
 ---
 name: 'Developer Internal'
 description: 'Focused Kotlin Multiplatform / Swift developer for executing well-defined FocusRitual implementation tasks. Does not spawn subagents.'
-tools: [execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read/readFile, read/problems, read/terminalSelection, read/terminalLastCommand, edit/createFile, edit/createDirectory, edit/editFiles, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, oraios/serena/*, todo]
+tools: [execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read/readFile, read/problems, read/terminalSelection, read/terminalLastCommand, edit/createFile, edit/createDirectory, edit/editFiles, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, serena/activate_project, serena/delete_memory, serena/edit_memory, serena/find_file, serena/find_referencing_symbols, serena/find_symbol, serena/get_current_config, serena/get_symbols_overview, serena/insert_after_symbol, serena/insert_before_symbol, serena/list_dir, serena/list_memories, serena/read_memory, serena/replace_symbol_body, serena/search_for_pattern, serena/think_about_collected_information, serena/think_about_task_adherence, serena/think_about_whether_you_are_done, serena/write_memory, todo]
 user-invocable: false
 ---
 

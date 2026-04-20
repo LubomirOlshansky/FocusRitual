@@ -1,7 +1,7 @@
 ---
 name: 'Architect Internal'
 description: 'Focused architect for executing delegated analysis, investigation, and documentation tasks on FocusRitual. Does not spawn subagents.'
-tools: [read/readFile, edit/createFile, edit/editFiles, edit/createDirectory, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, oraios/serena/*, todo]
+tools: [read/readFile, edit/createFile, edit/editFiles, edit/createDirectory, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, serena/activate_project, serena/find_file, serena/find_referencing_symbols, serena/find_symbol, serena/get_current_config, serena/get_symbols_overview, serena/list_dir, serena/list_memories, serena/read_memory, serena/search_for_pattern, serena/think_about_collected_information, serena/think_about_task_adherence, serena/think_about_whether_you_are_done, serena/write_memory, todo]
 user-invocable: false
 ---
 
