@@ -1,7 +1,7 @@
 ---
 name: 'Developer'
 description: 'Pure orchestrator for FocusRitual development tasks. Delegates ALL implementation to Developer Internal / Architect Internal subagents and verifies results. Never writes code directly.'
-tools: [execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read/readFile, read/problems, read/terminalSelection, read/terminalLastCommand, agent/runSubagent, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, serena/activate_project, serena/find_file, serena/find_referencing_symbols, serena/find_symbol, serena/get_current_config, serena/get_symbols_overview, serena/list_dir, serena/list_memories, serena/read_memory, serena/search_for_pattern, serena/think_about_collected_information, serena/think_about_task_adherence, serena/think_about_whether_you_are_done, serena/write_memory, todo]
+tools: [execute, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, agent, search, web, 'oraios/serena/*', todo]
 ---
 
 # Developer Agent (Orchestrator)

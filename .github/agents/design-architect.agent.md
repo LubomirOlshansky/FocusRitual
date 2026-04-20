@@ -1,7 +1,7 @@
 ---
 name: 'DesignArchitect'
 description: 'Design and redesign screens with deep design-system fidelity; produce visual specs and design plans for the Developer agent'
-tools: [read/readFile, agent/runSubagent, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, web/fetch, oraios/serena/activate_project, oraios/serena/find_file, oraios/serena/find_referencing_symbols, oraios/serena/find_symbol, oraios/serena/get_current_config, oraios/serena/get_symbols_overview, oraios/serena/list_dir, oraios/serena/list_memories, oraios/serena/read_memory, oraios/serena/search_for_pattern, oraios/serena/think_about_collected_information, oraios/serena/think_about_task_adherence, oraios/serena/think_about_whether_you_are_done, oraios/serena/write_memory, todo]
+tools:'oraios/serena/*'
 ---
 
 # Design Architect Agent
