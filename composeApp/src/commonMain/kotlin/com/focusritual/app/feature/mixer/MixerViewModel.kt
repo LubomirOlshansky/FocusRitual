@@ -78,6 +78,7 @@ class MixerViewModel(
             is MixerIntent.ToggleOrganicMotion -> toggleOrganicMotion(intent.soundId)
             is MixerIntent.RemoveFromMix -> removeFromMix(intent.soundId)
             MixerIntent.ToggleGlobalOrganicMotion -> toggleGlobalOrganic()
+            MixerIntent.OpenSaveDialog -> Unit
             is MixerIntent.SelectCategory -> selectCategory(intent.category)
         }
     }

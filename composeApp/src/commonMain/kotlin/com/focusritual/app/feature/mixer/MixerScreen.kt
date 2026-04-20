@@ -77,6 +77,10 @@ private fun MixerScreenContent(
     }
     val activeSounds = remember(uiState.sounds) { uiState.sounds.filter { it.isEnabled } }
     val anyOrganicOn = remember(activeSounds) { activeSounds.any { it.organicMotion } }
+    val allSoundsOrganic = remember(activeSounds) {
+        activeSounds.isNotEmpty() && activeSounds.all { sound -> sound.organicMotion }
+    }
+    val activeOrganicMotionSummary = remember(activeSounds) { organicMotionSummary(activeSounds = activeSounds) }
 
     Box(Modifier.fillMaxSize()) {
         ImmersiveBackground()
@@ -200,8 +204,20 @@ private fun MixerScreenContent(
             activeSounds = activeSounds,
             isPlaying = uiState.isPlaying,
             anyOrganicOn = anyOrganicOn,
+            organicMotionSummary = activeOrganicMotionSummary,
+            allSoundsOrganic = allSoundsOrganic,
             onIntent = onIntent,
             onDismiss = { showCurrentMixModal = false },
         )
+    }
+}
+
+internal fun organicMotionSummary(activeSounds: List<SoundState>): String {
+    val organicSounds = activeSounds.filter { sound -> sound.organicMotion }
+    return when {
+        organicSounds.isEmpty() -> "Off"
+        organicSounds.size == activeSounds.size -> "All sounds"
+        organicSounds.size == 1 -> "${organicSounds.first().name} only"
+        else -> "${organicSounds.size} sounds"
     }
 }

@@ -1,9 +1,17 @@
 package com.focusritual.app.feature.mixer.ui.modal
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -11,42 +19,81 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 internal fun GlobalOrganicMotionRow(
-    checked: Boolean,
+    isOrganicMotionEnabled: Boolean,
+    organicMotionSummary: String,
+    allSoundsOrganic: Boolean,
     onToggle: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Organic Motion",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+    val colorScheme = MaterialTheme.colorScheme
+    val summaryColor = when {
+        !isOrganicMotionEnabled -> colorScheme.onSurface.copy(alpha = 0.42f)
+        allSoundsOrganic -> colorScheme.primary.copy(alpha = 0.70f)
+        else -> colorScheme.primary.copy(alpha = 0.60f)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.AutoAwesome,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (isOrganicMotionEnabled) {
+                    colorScheme.primary.copy(alpha = 0.60f)
+                } else {
+                    colorScheme.onSurface.copy(alpha = 0.42f)
+                },
             )
+            Spacer(Modifier.width(10.dp))
             Text(
-                text = "For all active sounds",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "Organic motion",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Light,
+                color = colorScheme.onSurface.copy(alpha = 0.55f),
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = organicMotionSummary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Normal,
+                color = summaryColor,
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            Switch(
+                checked = isOrganicMotionEnabled,
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.scale(0.85f),
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colorScheme.onSurface.copy(alpha = 0.92f),
+                    checkedTrackColor = colorScheme.primaryContainer,
+                    checkedBorderColor = Color.Transparent,
+                    uncheckedThumbColor = colorScheme.onSurface.copy(alpha = 0.28f),
+                    uncheckedTrackColor = colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = Color.Transparent,
+                ),
             )
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                checkedTrackColor = MaterialTheme.colorScheme.surfaceBright,
-                checkedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainer,
-                uncheckedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            ),
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp)
+                .height(0.5.dp)
+                .background(colorScheme.outlineVariant.copy(alpha = 0.08f)),
         )
     }
 }

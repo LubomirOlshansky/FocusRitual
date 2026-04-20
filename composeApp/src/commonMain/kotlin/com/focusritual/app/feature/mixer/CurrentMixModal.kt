@@ -1,18 +1,20 @@
 package com.focusritual.app.feature.mixer
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -23,14 +25,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import com.focusritual.app.feature.mixer.domain.SoundState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
+import com.focusritual.app.feature.mixer.domain.SoundState
 import com.focusritual.app.feature.mixer.ui.modal.ActiveSoundRow
 import com.focusritual.app.feature.mixer.ui.modal.DoneButton
 import com.focusritual.app.feature.mixer.ui.modal.GlobalOrganicMotionRow
 import com.focusritual.app.feature.mixer.ui.modal.ModalHeader
+import com.focusritual.app.feature.mixer.ui.modal.SaveMixButton
 
 @Composable
 fun CurrentMixModal(
@@ -38,6 +43,8 @@ fun CurrentMixModal(
     activeSounds: List<SoundState>,
     isPlaying: Boolean,
     anyOrganicOn: Boolean,
+    organicMotionSummary: String = "",
+    allSoundsOrganic: Boolean = false,
     onIntent: (MixerIntent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -46,15 +53,79 @@ fun CurrentMixModal(
         if (activeSounds.isEmpty()) onDismiss()
     }
 
+    val isModalVisible = isVisible && activeSounds.isNotEmpty()
+
+    Box(modifier = modifier.fillMaxSize()) {
+        ModalScrim(
+            isVisible = isModalVisible,
+            onDismiss = onDismiss,
+        )
+        ModalContent(
+            isVisible = isModalVisible,
+            activeSounds = activeSounds,
+            isPlaying = isPlaying,
+            isOrganicMotionEnabled = anyOrganicOn,
+            organicMotionSummary = organicMotionSummary,
+            allSoundsOrganic = allSoundsOrganic,
+            onIntent = onIntent,
+            onDismiss = onDismiss,
+        )
+    }
+}
+
+@Composable
+private fun ModalScrim(
+    isVisible: Boolean,
+    onDismiss: () -> Unit,
+) {
     AnimatedVisibility(
-        visible = isVisible && activeSounds.isNotEmpty(),
-        enter = fadeIn(tween(350)) + slideInVertically(tween(400, easing = FastOutSlowInEasing)) { it },
-        exit = fadeOut(tween(250)) + slideOutVertically(tween(300, easing = FastOutSlowInEasing)) { it },
+        visible = isVisible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 250)),
     ) {
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.98f))
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.60f),
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onDismiss() },
+        )
+    }
+}
+
+@Composable
+private fun ModalContent(
+    isVisible: Boolean,
+    activeSounds: List<SoundState>,
+    isPlaying: Boolean,
+    isOrganicMotionEnabled: Boolean,
+    organicMotionSummary: String,
+    allSoundsOrganic: Boolean,
+    onIntent: (MixerIntent) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 350, easing = FocusRitualEasing.DeepEaseOut)) +
+            slideInVertically(
+                animationSpec = tween(durationMillis = 400, easing = FocusRitualEasing.DeepEaseOut),
+                initialOffsetY = { fullHeight -> fullHeight },
+            ),
+        exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FocusRitualEasing.CinematicIn)) +
+            slideOutVertically(
+                animationSpec = tween(durationMillis = 300, easing = FocusRitualEasing.CinematicIn),
+                targetOffsetY = { fullHeight -> fullHeight },
+            ),
+    ) {
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(surfaceColor)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
         ) {
@@ -68,47 +139,75 @@ fun CurrentMixModal(
 
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
+                    contentPadding = PaddingValues(top = 0.dp, bottom = 160.dp),
                 ) {
-                    item {
+                    item(key = "organic-motion") {
                         GlobalOrganicMotionRow(
-                            checked = anyOrganicOn,
+                            isOrganicMotionEnabled = isOrganicMotionEnabled,
+                            organicMotionSummary = organicMotionSummary,
+                            allSoundsOrganic = allSoundsOrganic,
                             onToggle = { onIntent(MixerIntent.ToggleGlobalOrganicMotion) },
                         )
-                        Spacer(Modifier.height(8.dp))
                     }
+
                     items(
                         items = activeSounds,
-                        key = { it.id },
+                        key = { sound -> sound.id },
                     ) { sound ->
                         val onAdjustVolume = remember(sound.id, onIntent) {
-                            { v: Float -> onIntent(MixerIntent.AdjustVolume(sound.id, v)) }
+                            { volume: Float -> onIntent(MixerIntent.AdjustVolume(soundId = sound.id, volume = volume)) }
                         }
-                        val onToggleOrganic = remember(sound.id, onIntent) {
-                            { onIntent(MixerIntent.ToggleOrganicMotion(sound.id)) }
+                        val onToggleOrganicMotion = remember(sound.id, onIntent) {
+                            { onIntent(MixerIntent.ToggleOrganicMotion(soundId = sound.id)) }
                         }
                         val onRemove = remember(sound.id, onIntent) {
-                            { onIntent(MixerIntent.RemoveFromMix(sound.id)) }
+                            { onIntent(MixerIntent.RemoveFromMix(soundId = sound.id)) }
                         }
+
                         ActiveSoundRow(
                             sound = sound,
                             onAdjustVolume = onAdjustVolume,
-                            onToggleOrganicMotion = onToggleOrganic,
+                            onToggleOrganicMotion = onToggleOrganicMotion,
                             onRemove = onRemove,
                             modifier = Modifier
                                 .animateItem()
-                                .padding(horizontal = 24.dp, vertical = 4.dp),
+                                .padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
                         )
                     }
                 }
             }
 
-            DoneButton(
-                onClick = onDismiss,
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp),
-            )
+                    .fillMaxWidth(),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    surfaceColor.copy(alpha = 0f),
+                                    surfaceColor.copy(alpha = 0.35f),
+                                    surfaceColor.copy(alpha = 0.72f),
+                                    surfaceColor,
+                                ),
+                            ),
+                        ),
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(surfaceColor)
+                        .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(space = 7.dp),
+                ) {
+                    SaveMixButton(onClick = { onIntent(MixerIntent.OpenSaveDialog) })
+                    DoneButton(onClick = onDismiss)
+                }
+            }
         }
     }
 }

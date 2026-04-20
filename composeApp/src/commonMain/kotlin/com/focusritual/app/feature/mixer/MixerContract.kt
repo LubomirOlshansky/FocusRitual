@@ -18,5 +18,6 @@ sealed interface MixerIntent {
     data class ToggleOrganicMotion(val soundId: String) : MixerIntent
     data class RemoveFromMix(val soundId: String) : MixerIntent
     data object ToggleGlobalOrganicMotion : MixerIntent
+    data object OpenSaveDialog : MixerIntent
     data class SelectCategory(val category: SoundCategory) : MixerIntent
 }

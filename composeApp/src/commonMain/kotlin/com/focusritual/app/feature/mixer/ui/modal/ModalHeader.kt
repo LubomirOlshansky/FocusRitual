@@ -1,30 +1,27 @@
 package com.focusritual.app.feature.mixer.ui.modal
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.focusritual.app.core.designsystem.component.CloseButton
 
 @Composable
 internal fun ModalHeader(
@@ -33,65 +30,54 @@ internal fun ModalHeader(
     onDismiss: () -> Unit,
     onTogglePlayback: () -> Unit,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onDismiss() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
-        }
+        CloseButton(onClick = onDismiss)
 
         Spacer(Modifier.weight(1f))
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "CURRENT MIX",
-                style = MaterialTheme.typography.labelSmall,
-                letterSpacing = 2.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Normal,
+                letterSpacing = 0.14.em,
+                color = colorScheme.onSurface.copy(alpha = 0.42f),
             )
             Text(
                 text = "$activeSoundCount sounds active",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Light,
+                color = colorScheme.onSurface.copy(alpha = 0.62f),
             )
         }
 
         Spacer(Modifier.weight(1f))
 
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onTogglePlayback() },
-            contentAlignment = Alignment.Center,
+        CircleIconButton(
+            onClick = onTogglePlayback,
+            size = 28.dp,
+            backgroundColor = colorScheme.surfaceContainerHighest.copy(alpha = 0.90f),
+            borderColor = colorScheme.outlineVariant.copy(alpha = 0.20f),
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Play",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                modifier = Modifier.size(20.dp),
-            )
+            Crossfade(
+                targetState = isPlaying,
+                animationSpec = tween(durationMillis = 250),
+                label = "modalHeaderPlaybackIcon",
+            ) { isCurrentlyPlaying ->
+                Icon(
+                    imageVector = if (isCurrentlyPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = if (isCurrentlyPlaying) "Pause" else "Play",
+                    tint = colorScheme.onSurface.copy(alpha = 0.55f),
+                    modifier = Modifier.size(14.dp),
+                )
+            }
         }
     }
 }
