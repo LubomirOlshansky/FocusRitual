@@ -19,6 +19,8 @@ import com.focusritual.app.app.integration.liveactivity.LiveActivityEffect
 import com.focusritual.app.feature.mixer.MixerIntent
 import com.focusritual.app.feature.mixer.MixerScreen
 import com.focusritual.app.feature.mixer.MixerViewModel
+import com.focusritual.app.feature.mixer.data.AmbientStateRepository
+import com.focusritual.app.feature.mixer.data.MixPresetRepository
 import com.focusritual.app.feature.session.FocusSessionScreen
 import com.focusritual.app.feature.session.SessionConfig
 import com.focusritual.app.feature.timer.ActiveSessionIntent
@@ -36,7 +38,12 @@ fun App() {
     FocusRitualTheme {
         var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Mixer) }
         var sessionKey by remember { mutableIntStateOf(0) }
-        val mixerViewModel: MixerViewModel = viewModel { MixerViewModel() }
+        val mixerViewModel: MixerViewModel = viewModel {
+            MixerViewModel(
+                presetRepo = MixPresetRepository(),
+                ambientRepo = AmbientStateRepository(),
+            )
+        }
         val mixerState by mixerViewModel.uiState.collectAsStateWithLifecycle()
 
         // Track session ViewModel at this level for Live Activity

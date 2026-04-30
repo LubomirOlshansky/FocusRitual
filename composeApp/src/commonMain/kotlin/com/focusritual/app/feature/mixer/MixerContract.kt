@@ -1,5 +1,6 @@
 package com.focusritual.app.feature.mixer
 
+import com.focusritual.app.feature.mixer.domain.MixPreset
 import com.focusritual.app.feature.mixer.domain.SoundCategory
 import com.focusritual.app.feature.mixer.domain.SoundState
 
@@ -9,6 +10,9 @@ data class MixerUiState(
     val selectedCategory: SoundCategory = SoundCategory.ALL,
     val activeSoundsSummary: String = "",
     val activeSoundCount: Int = 0,
+    val savedMixes: List<MixPreset> = emptyList(),
+    val loadedPresetId: String? = null,
+    val isDirtyFromPreset: Boolean = false,
 )
 
 sealed interface MixerIntent {
@@ -18,6 +22,8 @@ sealed interface MixerIntent {
     data class ToggleOrganicMotion(val soundId: String) : MixerIntent
     data class RemoveFromMix(val soundId: String) : MixerIntent
     data object ToggleGlobalOrganicMotion : MixerIntent
-    data object OpenSaveDialog : MixerIntent
+    data class SaveCurrentMix(val name: String) : MixerIntent
+    data class LoadMix(val presetId: String) : MixerIntent
+    data class DeleteMix(val presetId: String) : MixerIntent
     data class SelectCategory(val category: SoundCategory) : MixerIntent
 }

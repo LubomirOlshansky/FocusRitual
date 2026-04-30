@@ -38,9 +38,11 @@ import com.focusritual.app.feature.mixer.domain.CurrentMixSummary
 import com.focusritual.app.feature.mixer.domain.SoundCategory
 import com.focusritual.app.feature.mixer.domain.SoundState
 import com.focusritual.app.feature.mixer.ui.CategoryPillRow
+import com.focusritual.app.feature.mixer.ui.SavedMixesGhostRow
 import com.focusritual.app.feature.mixer.ui.CurrentMixPanel
 import com.focusritual.app.feature.mixer.ui.HeroSessionButton
 import com.focusritual.app.feature.mixer.ui.ImmersiveBackground
+import com.focusritual.app.feature.mixer.ui.PresetsSheet
 import com.focusritual.app.feature.mixer.ui.SectionHeader
 
 @Composable
@@ -67,6 +69,14 @@ private fun MixerScreenContent(
 ) {
     var showAboutSheet by remember { mutableStateOf(false) }
     var showCurrentMixModal by remember { mutableStateOf(false) }
+    var showPresetsSheet by remember { mutableStateOf(false) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var saveDialogState by remember { mutableStateOf(SaveDialogState.Input) }
+
+    val openSaveDialog: () -> Unit = {
+        saveDialogState = SaveDialogState.Input
+        showSaveDialog = true
+    }
 
     val mixSummary = remember(uiState.isPlaying, uiState.activeSoundCount, uiState.activeSoundsSummary) {
         CurrentMixSummary(
@@ -76,11 +86,18 @@ private fun MixerScreenContent(
         )
     }
     val activeSounds = remember(uiState.sounds) { uiState.sounds.filter { it.isEnabled } }
+    val soundNamesById = remember(uiState.sounds) { uiState.sounds.associate { it.id to it.name } }
     val anyOrganicOn = remember(activeSounds) { activeSounds.any { it.organicMotion } }
     val allSoundsOrganic = remember(activeSounds) {
         activeSounds.isNotEmpty() && activeSounds.all { sound -> sound.organicMotion }
     }
     val activeOrganicMotionSummary = remember(activeSounds) { organicMotionSummary(activeSounds = activeSounds) }
+    val alreadySaved = remember(uiState.loadedPresetId, uiState.isDirtyFromPreset) {
+        uiState.loadedPresetId != null && !uiState.isDirtyFromPreset
+    }
+    val existingMixNames = remember(uiState.savedMixes) {
+        uiState.savedMixes.map { it.name.trim().lowercase() }.toSet()
+    }
 
     Box(Modifier.fillMaxSize()) {
         ImmersiveBackground()
@@ -103,7 +120,6 @@ private fun MixerScreenContent(
                         )
                     }
 
-                    // About button — unchanged
                     val aboutInteractionSource = remember { MutableInteractionSource() }
                     val aboutPressed by aboutInteractionSource.collectIsPressedAsState()
                     val aboutScale by animateFloatAsState(
@@ -145,15 +161,25 @@ private fun MixerScreenContent(
                     }
                 }
             }
-            // Category pill row
             item {
                 CategoryPillRow(
                     selectedCategory = uiState.selectedCategory,
                     onSelectCategory = { onIntent(MixerIntent.SelectCategory(it)) },
                 )
             }
+            if (uiState.savedMixes.isNotEmpty()) {
+                item(key = "saved_mixes_ghost") {
+                    SavedMixesGhostRow(
+                        count = uiState.savedMixes.size,
+                        onTap = { showPresetsSheet = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .animateItem(fadeInSpec = tween(300)),
+                    )
+                }
+            }
 
-            // Grouped sound sections
             filteredSounds.forEach { (category, sounds) ->
                 item(key = "header_${category.name}") {
                     SectionHeader(
@@ -187,7 +213,6 @@ private fun MixerScreenContent(
             }
         }
 
-        // Floating Current Mix Panel
         CurrentMixPanel(
             summary = mixSummary,
             onTogglePlayback = { onIntent(MixerIntent.TogglePlayback) },
@@ -206,9 +231,48 @@ private fun MixerScreenContent(
             anyOrganicOn = anyOrganicOn,
             organicMotionSummary = activeOrganicMotionSummary,
             allSoundsOrganic = allSoundsOrganic,
+            isDirtyFromPreset = uiState.isDirtyFromPreset,
+            alreadySaved = alreadySaved,
             onIntent = onIntent,
+            onSaveCurrent = openSaveDialog,
             onDismiss = { showCurrentMixModal = false },
         )
+
+        PresetsSheet(
+            isVisible = showPresetsSheet,
+            presets = uiState.savedMixes,
+            loadedPresetId = uiState.loadedPresetId,
+            isDirtyFromPreset = uiState.isDirtyFromPreset,
+            soundNamesById = soundNamesById,
+            onLoad = { presetId ->
+                onIntent(MixerIntent.LoadMix(presetId))
+            },
+            onSaveCurrent = {
+                openSaveDialog()
+            },
+            onDelete = { presetId -> onIntent(MixerIntent.DeleteMix(presetId)) },
+            onDismiss = { showPresetsSheet = false },
+        )
+
+        if (showSaveDialog) {
+            SaveMixDialog(
+                activeSounds = activeSounds,
+                dialogState = saveDialogState,
+                existingMixNames = existingMixNames,
+                onSave = { name ->
+                    saveDialogState = SaveDialogState.Saved
+                    onIntent(MixerIntent.SaveCurrentMix(name))
+                },
+                onDone = {
+                    showSaveDialog = false
+                    saveDialogState = SaveDialogState.Input
+                },
+                onDismiss = {
+                    showSaveDialog = false
+                    saveDialogState = SaveDialogState.Input
+                },
+            )
+        }
     }
 }
 

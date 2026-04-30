@@ -45,7 +45,10 @@ fun CurrentMixModal(
     anyOrganicOn: Boolean,
     organicMotionSummary: String = "",
     allSoundsOrganic: Boolean = false,
+    isDirtyFromPreset: Boolean,
+    alreadySaved: Boolean,
     onIntent: (MixerIntent) -> Unit,
+    onSaveCurrent: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -67,7 +70,10 @@ fun CurrentMixModal(
             isOrganicMotionEnabled = anyOrganicOn,
             organicMotionSummary = organicMotionSummary,
             allSoundsOrganic = allSoundsOrganic,
+            isDirtyFromPreset = isDirtyFromPreset,
+            alreadySaved = alreadySaved,
             onIntent = onIntent,
+            onOpenSaveMix = onSaveCurrent,
             onDismiss = onDismiss,
         )
     }
@@ -105,7 +111,10 @@ private fun ModalContent(
     isOrganicMotionEnabled: Boolean,
     organicMotionSummary: String,
     allSoundsOrganic: Boolean,
+    isDirtyFromPreset: Boolean,
+    alreadySaved: Boolean,
     onIntent: (MixerIntent) -> Unit,
+    onOpenSaveMix: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AnimatedVisibility(
@@ -204,7 +213,11 @@ private fun ModalContent(
                         .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(space = 7.dp),
                 ) {
-                    SaveMixButton(onClick = { onIntent(MixerIntent.OpenSaveDialog) })
+                    SaveMixButton(
+                        isDirty = isDirtyFromPreset,
+                        alreadySaved = alreadySaved,
+                        onClick = onOpenSaveMix,
+                    )
                     DoneButton(onClick = onDismiss)
                 }
             }
