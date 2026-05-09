@@ -27,6 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.done
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun DoneButton(
@@ -47,7 +50,7 @@ internal fun DoneButton(
                 .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)),
         )
         Text(
-            text = "Done",
+            text = stringResource(Res.string.done),
             fontSize = 13.sp,
             fontWeight = FontWeight.Normal,
             letterSpacing = 0.04.em,

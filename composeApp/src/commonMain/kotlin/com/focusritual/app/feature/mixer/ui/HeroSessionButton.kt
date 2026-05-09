@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.theme.GlowColor
 import com.focusritual.app.core.designsystem.theme.OrganicEasing
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.start_session
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -144,7 +147,7 @@ internal fun HeroSessionButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "START SESSION",
+            text = stringResource(Res.string.start_session).uppercase(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.2.sp,

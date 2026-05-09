@@ -20,11 +20,10 @@ actual class AudioPlayer actual constructor() {
             setDataSource(file.absolutePath)
             isLooping = loop
             prepare()
+            onPlayerStarted()
+            serviceStarted = true
             start()
         }
-
-        onPlayerStarted()
-        serviceStarted = true
     }
 
     actual fun stop() {
@@ -66,6 +65,7 @@ actual class AudioPlayer actual constructor() {
         private fun onPlayerStarted() {
             val context = AndroidAudioContext.appContext
             if (activeCount++ == 0) {
+                AndroidAudioFocusController.onPlaybackStarted()
                 context.startForegroundService(Intent(context, FocusAudioService::class.java))
             }
         }
@@ -73,6 +73,7 @@ actual class AudioPlayer actual constructor() {
         private fun onPlayerReleased() {
             if (--activeCount <= 0) {
                 activeCount = 0
+                AndroidAudioFocusController.onPlaybackStopped()
                 val context = AndroidAudioContext.appContext
                 context.stopService(Intent(context, FocusAudioService::class.java))
             }

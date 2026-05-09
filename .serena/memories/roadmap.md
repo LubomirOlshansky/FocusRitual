@@ -1,60 +1,55 @@
 # FocusRitual — Roadmap & Architecture Decisions
 
-## Completed (March 2026)
-- [x] Project scaffolding (KMP + Compose Multiplatform)
-- [x] Custom dark theme (FocusRitualTheme with 17 color tokens, typography scale)
-- [x] MVI architecture for mixer feature (Contract, ViewModel, Screen)
-- [x] Reusable PlayButton component (glassmorphic, animated)
-- [x] Immersive background with dark forest image + gradient overlay
-- [x] Sound mixer: 9 ambient sounds with toggle + volume, SoundMixer orchestrator
-- [x] Audio playback: expect/actual AudioPlayer (Android: MediaPlayer, iOS: AVAudioPlayer)
-- [x] Focus session configuration screen (3 presets + custom with steppers)
-- [x] Active focus session timer (countdown, phase management, breathing circle, progress dots)
-- [x] State-based navigation (AppScreen sealed interface + Crossfade)
-- [x] Phase-aware sound control (Focus=play, Break=silent, fade transitions, cleanup on exit)
-- [x] SessionConfig flow: FocusSessionScreen → resolveConfig() → ActiveSessionScreen
-- [x] MixerViewModel hoisting for audio continuity across screens
-- [x] Builds successfully on Android and iOS
+## Completed
+- Project scaffold: Kotlin Multiplatform + Compose Multiplatform.
+- Custom dark FocusRitual theme and design system tokens.
+- Mixer core: 9 bundled ambient sounds, independent toggles/volumes, organic motion, play/pause.
+- Audio engine: expect/actual `AudioPlayer`, `SoundMixer`, `MixAudioOrchestrator`, session-aware master volume.
+- Focus and sleep session setup screens with persisted custom preferences.
+- Active session timer with phase management, breathing visuals, cycle progress, and audio fade behavior.
+- Current mix modal and save mix dialog.
+- Mixer persistence via `multiplatform-settings` + `kotlinx-serialization-json`: saved mixes and ambient snapshot.
+- Full-screen Settings route with audio preferences, app/support/legal sections, sound credits, privacy policy, terms of use.
+- Platform actions layer for app settings, rate/review, share, contact email, URL opening, app version; Settings emits one-shot effects to execute them.
+- Android audio focus and iOS `AVAudioSession` integration for mix/duck settings.
+- iOS Live Activity bridge and Widget extension structure.
+- Protect Focus / Screen Time bridge skeleton.
+- State-based root navigation in `App.kt` with hoisted `MixerViewModel`.
 
-## Next Steps (in priority order)
-1. **DI** — Add Koin when ViewModels need injected dependencies
-2. **Persistence** — DataStore Preferences for saved sound mixes, timer configs
-3. **Presets** — Save/load sound mixer configurations
-4. **Settings screen** — Timer defaults, notification preferences
-5. **Notifications** — Timer phase change alerts (platform-specific)
-6. **Polish** — Haptic feedback, additional sounds, onboarding
+## Near-Term Priorities
+1. Verify full-screen Settings/localization on devices: app-language settings on Android 13+, Preferred Language row on iOS, Settings detail/home back behavior, and iOS edge-swipe UX.
+2. Review first-pass translations and replace generated legal/privacy/terms copy with final approved text.
+3. Device-test audio mix/duck behavior with external audio on Android and iOS.
+4. Device verification: test mix/duck behavior on real iOS and Android devices.
+5. Production polish: final legal copy, real App Store ID, Protect Focus entitlements/device flow.
+6. Add focused tests for SettingsViewModel, repositories, and ViewModel construction smoke coverage.
+7. DI/navigation library only if default-arg construction or state-based routing becomes painful.
 
-## Architecture Decisions Log
+## Architecture Decisions
 
-### Decision: State-based navigation (not navigation-compose)
-- Simple AppScreen sealed interface + Crossfade in App.kt
-- Allows hoisting MixerViewModel for audio continuity across screens
-- No serialization needed, no library dependency
-- Works well for 3-screen app; reconsider if screen count grows significantly
+### State-based navigation for now
+- `AppScreen` sealed interface + `Crossfade` keeps the app simple and allows `MixerViewModel` hoisting.
+- Revisit if app-level back stack, deep links, settings/legal flows, or swipe-back behavior become complex.
 
-### Decision: Hoisted MixerViewModel for audio continuity
-- MixerViewModel created in App.kt, passed to MixerScreen and indirectly controls audio during sessions
-- `setSessionMasterVolume(Float?)` allows ActiveSessionScreen to control playback without owning SoundMixer
-- `null` returns control to mixer's own isPlaying state
+### Hoisted mixer ViewModel
+- `MixerViewModel` stays in `App.kt` so audio continues across mixer/session/timer screens.
+- `setSessionMasterVolume(Float?)` lets session screens influence playback without owning audio.
 
-### Decision: No Ktor (yet)
-- App is fully offline for v1 (bundled sounds, local presets)
-- Add Ktor only when remote content, subscriptions, or analytics are needed
+### Multiplatform settings for local persistence
+- The app currently uses `multiplatform-settings` for session preferences, audio settings, saved mixes, and ambient snapshot.
+- JSON persistence lives in mixer `data/` and is intentionally local/offline.
 
-### Decision: Custom AudioPlayer (not a library)
-- No mature KMP audio library supports multi-track mixing with independent volumes
-- expect/actual with platform APIs (MediaPlayer + AVAudioPlayer) is more flexible
-- SoundMixer.syncState() declaratively syncs UI state to audio playback
+### Custom audio player
+- No mature KMP audio library covers FocusRitual's multi-track independent-volume requirements.
+- Platform actuals remain straightforward and controlled.
 
-### Decision: Koin for DI (when needed)
-- Lightweight, KMP-native, no codegen
-- Works with lifecycle ViewModel out of the box
-- Hilt is Android-only, can't use in commonMain
+### Platform actions as core abstraction
+- External actions (settings, email, sharing, rate/review, URL opening) live behind `core/platformaction`.
+- Feature ViewModels should emit effects; composables execute effects through `PlatformActions`.
 
-### Decision: DataStore over multiplatform-settings
-- First-party, same ecosystem as lifecycle deps
-- Full KMP support since DataStore 1.1.0
+### Koin remains deferred
+- Default-argument construction is acceptable while dependency graphs are small.
+- Add Koin when ViewModels/repositories become hard to instantiate or test.
 
-### Decision: Defer AGP module split
-- AGP 9.0 will require separating com.android.application from KMP module
-- No action needed until AGP 9.0 ships — current setup works fine
+### Ktor remains unnecessary
+- The app is offline-first for v1. Add networking only for remote content, subscriptions, or analytics.

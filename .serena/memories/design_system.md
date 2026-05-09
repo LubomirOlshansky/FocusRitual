@@ -281,7 +281,7 @@ object FocusRitualEasing {
 1. No ripple anywhere — `indication = null` on every clickable.
 2. Press: scale(0.97) tween(150), restore on release.
 3. No system `Button`/`FilledButton` — always custom `Box + clickable`.
-4. No long-press, no swipe, no double-tap. Single tap only.
+4. No long-press, no double-tap. Single tap only for ordinary controls. Exception: native-feeling iOS edge swipe-back is allowed for app/screen navigation only, not for component actions.
 
 ---
 

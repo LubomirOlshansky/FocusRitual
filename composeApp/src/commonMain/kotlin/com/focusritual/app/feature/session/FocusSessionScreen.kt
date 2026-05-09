@@ -48,16 +48,36 @@ import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
 import com.focusritual.app.feature.session.ui.SessionModeToggle
 import com.focusritual.app.core.designsystem.component.StartSessionButton
 import com.focusritual.app.core.designsystem.component.StepperRow
+import com.focusritual.app.core.haptic.HapticController
 import com.focusritual.app.core.protectfocus.ProtectFocusConfig
 import com.focusritual.app.core.protectfocus.ProtectFocusController
 import com.focusritual.app.core.protectfocus.ProtectFocusState
 import com.focusritual.app.core.protectfocus.SetupResult
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.session_break
+import focusritual.composeapp.generated.resources.session_custom
+import focusritual.composeapp.generated.resources.session_cycles
+import focusritual.composeapp.generated.resources.session_duration
+import focusritual.composeapp.generated.resources.session_fade_out
+import focusritual.composeapp.generated.resources.session_focus
+import focusritual.composeapp.generated.resources.session_focus_title
+import focusritual.composeapp.generated.resources.session_min_unit
+import focusritual.composeapp.generated.resources.session_preset_long
+import focusritual.composeapp.generated.resources.session_preset_medium
+import focusritual.composeapp.generated.resources.session_preset_short
+import focusritual.composeapp.generated.resources.session_protect_focus_subtitle
+import focusritual.composeapp.generated.resources.session_protect_focus_title
+import focusritual.composeapp.generated.resources.session_sleep_hint
+import focusritual.composeapp.generated.resources.session_sleep_title
+import focusritual.composeapp.generated.resources.start_session
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FocusSessionScreen(
     onClose: () -> Unit,
     onStartSession: (SessionConfig) -> Unit,
+    hapticController: HapticController = HapticController(),
     viewModel: FocusSessionViewModel = viewModel { FocusSessionViewModel() },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,6 +102,7 @@ fun FocusSessionScreen(
                             sleepFadeOutMinutes = uiState.sleepFadeOutMinutes,
                         )
                     }
+                    hapticController.sessionStarted()
                     onStartSession(config)
                 }
                 else -> viewModel.onIntent(intent)
@@ -118,8 +139,8 @@ private fun FocusSessionScreenContent(
             ) {
                 Text(
                     text = when (mode) {
-                        SessionMode.Focus -> "Focus Session".uppercase()
-                        SessionMode.Sleep -> "Sleep Session".uppercase()
+                        SessionMode.Focus -> stringResource(Res.string.session_focus_title).uppercase()
+                        SessionMode.Sleep -> stringResource(Res.string.session_sleep_title).uppercase()
                     },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
@@ -161,7 +182,10 @@ private fun FocusSessionScreenContent(
             }
 
             Spacer(Modifier.height(16.dp))
-            StartSessionButton(onClick = { onIntent(FocusSessionIntent.StartSession) })
+            StartSessionButton(
+                onClick = { onIntent(FocusSessionIntent.StartSession) },
+                label = stringResource(Res.string.start_session).uppercase(),
+            )
             Spacer(Modifier.height(24.dp))
         }
 
@@ -205,14 +229,14 @@ private fun FocusModeContent(
     uiState.presets.forEach { preset ->
         val isSelected = uiState.selectedPresetId == preset.id
         PresetRow(
-            label = preset.label,
+            label = preset.localizedLabel(),
             isSelected = isSelected,
             onClick = { onIntent(FocusSessionIntent.SelectPreset(preset.id)) },
         )
     }
 
     PresetRow(
-        label = "Custom",
+        label = stringResource(Res.string.session_custom),
         isSelected = uiState.isCustomSelected,
         onClick = { onIntent(FocusSessionIntent.SelectCustom) },
     )
@@ -231,9 +255,9 @@ private fun FocusModeContent(
                 ),
         ) {
             StepperRow(
-                label = "Focus",
+                label = stringResource(Res.string.session_focus),
                 value = uiState.customFocusMinutes,
-                unit = "min",
+                unit = stringResource(Res.string.session_min_unit),
                 onDecrement = { onIntent(FocusSessionIntent.AdjustFocus(-1)) },
                 onIncrement = { onIntent(FocusSessionIntent.AdjustFocus(1)) },
             )
@@ -242,9 +266,9 @@ private fun FocusModeContent(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.09f),
             )
             StepperRow(
-                label = "Break",
+                label = stringResource(Res.string.session_break),
                 value = uiState.customBreakMinutes,
-                unit = "min",
+                unit = stringResource(Res.string.session_min_unit),
                 onDecrement = { onIntent(FocusSessionIntent.AdjustBreak(-1)) },
                 onIncrement = { onIntent(FocusSessionIntent.AdjustBreak(1)) },
             )
@@ -253,7 +277,7 @@ private fun FocusModeContent(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.09f),
             )
             StepperRow(
-                label = "Cycles",
+                label = stringResource(Res.string.session_cycles),
                 value = uiState.customSessions,
                 unit = "×",
                 onDecrement = { onIntent(FocusSessionIntent.AdjustSessions(-1)) },
@@ -306,13 +330,13 @@ private fun FocusModeContent(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
-                text = "Protect Focus",
+                text = stringResource(Res.string.session_protect_focus_title),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Light,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
             )
             Text(
-                text = "Block distracting apps during session",
+                text = stringResource(Res.string.session_protect_focus_subtitle),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Light,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
@@ -343,9 +367,9 @@ private fun SleepModeContent(
             ),
     ) {
         StepperRow(
-            label = "Duration",
+            label = stringResource(Res.string.session_duration),
             value = uiState.sleepDurationMinutes,
-            unit = "min",
+            unit = stringResource(Res.string.session_min_unit),
             onDecrement = { onIntent(FocusSessionIntent.AdjustSleepDuration(-1)) },
             onIncrement = { onIntent(FocusSessionIntent.AdjustSleepDuration(1)) },
         )
@@ -354,14 +378,14 @@ private fun SleepModeContent(
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.09f),
         )
         StepperRow(
-            label = "Fade out",
+            label = stringResource(Res.string.session_fade_out),
             value = uiState.sleepFadeOutMinutes,
-            unit = "min",
+            unit = stringResource(Res.string.session_min_unit),
             onDecrement = { onIntent(FocusSessionIntent.AdjustSleepFadeOut(-1)) },
             onIncrement = { onIntent(FocusSessionIntent.AdjustSleepFadeOut(1)) },
         )
         Text(
-            text = "sounds fade over the last portion",
+            text = stringResource(Res.string.session_sleep_hint),
             fontSize = 10.sp,
             fontWeight = FontWeight.Normal,
             letterSpacing = 0.04.em,
@@ -369,6 +393,14 @@ private fun SleepModeContent(
             modifier = Modifier.padding(start = 13.dp, top = 2.dp, bottom = 12.dp),
         )
     }
+}
+
+@Composable
+private fun SessionPreset.localizedLabel(): String = when (id) {
+    "short" -> stringResource(Res.string.session_preset_short)
+    "medium" -> stringResource(Res.string.session_preset_medium)
+    "long" -> stringResource(Res.string.session_preset_long)
+    else -> label
 }
 
 @Composable

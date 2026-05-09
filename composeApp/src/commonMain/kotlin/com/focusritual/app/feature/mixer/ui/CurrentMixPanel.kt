@@ -40,6 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.component.AirPlayButton
 import com.focusritual.app.feature.mixer.domain.CurrentMixSummary
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.current_mix_label
+import focusritual.composeapp.generated.resources.pause
+import focusritual.composeapp.generated.resources.play
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun CurrentMixPanel(
@@ -87,7 +92,7 @@ internal fun CurrentMixPanel(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "CURRENT MIX",
+                        text = stringResource(Res.string.current_mix_label).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         letterSpacing = 0.10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.40f),
@@ -132,7 +137,11 @@ internal fun CurrentMixPanel(
                 ) {
                     Icon(
                         imageVector = if (summary.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (summary.isPlaying) "Pause" else "Play",
+                        contentDescription = if (summary.isPlaying) {
+                            stringResource(Res.string.pause)
+                        } else {
+                            stringResource(Res.string.play)
+                        },
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                         modifier = Modifier.size(20.dp),
                     )

@@ -1,4 +1,4 @@
-package com.focusritual.app.feature.about
+package com.focusritual.app.feature.settings.domain
 
 data class SoundCredit(
     val name: String,

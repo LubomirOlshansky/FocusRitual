@@ -75,6 +75,14 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.feature.mixer.domain.MixPreset
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.delete
+import focusritual.composeapp.generated.resources.presets_all_mixes
+import focusritual.composeapp.generated.resources.presets_currently_loaded
+import focusritual.composeapp.generated.resources.presets_save_current
+import focusritual.composeapp.generated.resources.presets_saved_mixes
+import focusritual.composeapp.generated.resources.presets_swipe_left_delete
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -294,7 +302,10 @@ internal fun PresetsSheet(
 
                         loadedPreset?.let { preset ->
                             item(key = "currently_loaded_label") {
-                                SectionLabel(text = "CURRENTLY LOADED", modifier = Modifier.offset(y = (-4).dp))
+                                SectionLabel(
+                                    text = stringResource(Res.string.presets_currently_loaded).uppercase(),
+                                    modifier = Modifier.offset(y = (-4).dp),
+                                )
                             }
                             item(key = "loaded_${preset.id}") {
                                 PresetCard(
@@ -310,7 +321,7 @@ internal fun PresetsSheet(
                         if (allPresets.isNotEmpty()) {
                             item(key = "all_mixes_label") {
                                 SectionLabel(
-                                    text = "ALL MIXES",
+                                    text = stringResource(Res.string.presets_all_mixes).uppercase(),
                                     modifier = Modifier.padding(top = if (loadedPreset == null) 4.dp else 8.dp),
                                 )
                             }
@@ -358,7 +369,7 @@ internal fun PresetsSheet(
                         if (presets.isNotEmpty()) {
                             item(key = "hint") {
                                 Text(
-                                    text = "Swipe left to delete",
+                                    text = stringResource(Res.string.presets_swipe_left_delete),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Light,
                                     textAlign = TextAlign.Center,
@@ -404,7 +415,7 @@ private fun SheetHeader(onSaveCurrent: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "SAVED MIXES",
+            text = stringResource(Res.string.presets_saved_mixes).uppercase(),
             fontSize = 12.sp,
             fontWeight = FontWeight.Normal,
             letterSpacing = 0.16.em,
@@ -452,7 +463,7 @@ private fun SaveCurrentPill(onClick: () -> Unit) {
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
         )
         Text(
-            text = "Save current",
+            text = stringResource(Res.string.presets_save_current),
             fontSize = 13.sp,
             fontWeight = FontWeight.Light,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f),
@@ -502,12 +513,12 @@ private fun SwipeDeleteBackground() {
         ) {
             Icon(
                 imageVector = Icons.Outlined.DeleteOutline,
-                contentDescription = "Delete",
+                contentDescription = stringResource(Res.string.delete),
                 modifier = Modifier.size(18.dp),
                 tint = tint,
             )
             Text(
-                text = "Delete",
+                text = stringResource(Res.string.delete),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Normal,
                 color = tint,

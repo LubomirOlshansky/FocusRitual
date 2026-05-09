@@ -19,12 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.start_session
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun StartSessionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "START SESSION",
+    label: String? = null,
 ) {
     Box(
         modifier = modifier
@@ -44,7 +47,7 @@ fun StartSessionButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = label,
+            text = label ?: stringResource(Res.string.start_session).uppercase(),
             fontSize = 11.sp,
             fontWeight = FontWeight.Normal,
             letterSpacing = 0.16.em,

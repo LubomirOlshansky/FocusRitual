@@ -20,6 +20,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.save_this_mix
+import focusritual.composeapp.generated.resources.saved
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SaveMixButton(
@@ -35,7 +39,11 @@ internal fun SaveMixButton(
         label = "saveMixButtonAlpha",
     )
 
-    val label = if (alreadySaved) "Saved" else "Save this mix"
+    val label = if (alreadySaved) {
+        stringResource(Res.string.saved)
+    } else {
+        stringResource(Res.string.save_this_mix)
+    }
     val icon = if (alreadySaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder
 
     @Suppress("UNUSED_VARIABLE")

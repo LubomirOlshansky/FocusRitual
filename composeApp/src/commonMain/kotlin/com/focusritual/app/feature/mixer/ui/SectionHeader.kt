@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.feature.mixer.domain.SoundCategory
-import com.focusritual.app.feature.mixer.domain.displayName
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_active_count
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SectionHeader(
@@ -29,7 +31,7 @@ internal fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = category.displayName.uppercase(),
+            text = category.localizedLabel().uppercase(),
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 0.12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.48f),
@@ -44,7 +46,7 @@ internal fun SectionHeader(
                 .padding(start = 8.dp, end = 8.dp, top = 3.dp, bottom = 3.dp),
         ) {
             Text(
-                text = "$activeCount active",
+                text = stringResource(Res.string.mixer_active_count, activeCount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
             )

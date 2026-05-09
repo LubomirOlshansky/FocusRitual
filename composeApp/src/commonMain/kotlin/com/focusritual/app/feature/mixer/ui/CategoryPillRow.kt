@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.focusritual.app.feature.mixer.domain.SoundCategory
-import com.focusritual.app.feature.mixer.domain.displayName
 
 @Composable
 internal fun CategoryPillRow(
@@ -107,7 +106,7 @@ private fun CategoryPill(
             Spacer(Modifier.width(6.dp))
         }
         Text(
-            text = category.displayName,
+            text = category.localizedLabel(),
             style = MaterialTheme.typography.labelMedium,
             color = textColor,
         )

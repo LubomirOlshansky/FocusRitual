@@ -1,5 +1,7 @@
 package com.focusritual.app.core.audio
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -125,5 +127,40 @@ class SoundMixerTest {
         mixer.syncState(listOf(AudioCommand("rain", volume = 0.5f, enabled = true)))
         val p = assertNotNull(factory.lastCreated)
         assertTrue(p.events.any { it is Event.SetVolume && it.v == 0.5f })
+    }
+}
+
+class OrganicMotionEngineTest {
+
+    @Test fun zero_base_volume_emits_zero_without_crashing() = runBlocking {
+        val engine = OrganicMotionEngine(this)
+
+        engine.enable("rain", 0f)
+        delay(40L)
+
+        assertEquals(0f, engine.offsets.value["rain"])
+        engine.release()
+    }
+
+    @Test fun updating_base_volume_to_zero_emits_zero_without_crashing() = runBlocking {
+        val engine = OrganicMotionEngine(this)
+
+        engine.enable("rain", 0.5f)
+        delay(40L)
+        engine.updateBase("rain", 0f)
+        delay(40L)
+
+        assertEquals(0f, engine.offsets.value["rain"])
+        engine.release()
+    }
+
+    @Test fun tiny_base_volume_is_not_clamped_above_base() = runBlocking {
+        val engine = OrganicMotionEngine(this)
+
+        engine.enable("rain", 0.005f)
+        delay(40L)
+
+        assertEquals(0.005f, engine.offsets.value["rain"])
+        engine.release()
     }
 }

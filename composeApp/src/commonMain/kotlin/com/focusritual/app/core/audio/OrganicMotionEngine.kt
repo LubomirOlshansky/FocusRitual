@@ -81,6 +81,14 @@ class OrganicMotionEngine(private val scope: CoroutineScope) {
             phase = Phase.MOVING
             phaseTicksRemaining = 100  // ~3.5s
         }
+
+        fun effectiveVolume(): Float {
+            val safeBaseVolume = baseVolume.coerceAtLeast(0f)
+            if (safeBaseVolume <= 0f) return 0f
+
+            val minimumVolume = minOf(0.01f, safeBaseVolume)
+            return (safeBaseVolume + currentOffset).coerceIn(minimumVolume, safeBaseVolume)
+        }
     }
 
     private val activeSounds = mutableMapOf<String, MotionState>()
@@ -143,7 +151,7 @@ class OrganicMotionEngine(private val scope: CoroutineScope) {
                     }
 
                     // Never exceed base volume
-                    result[id] = (motion.baseVolume + motion.currentOffset).coerceIn(0.01f, motion.baseVolume)
+                    result[id] = motion.effectiveVolume()
                 }
                 _offsets.value = result
                 delay(TICK_MS)

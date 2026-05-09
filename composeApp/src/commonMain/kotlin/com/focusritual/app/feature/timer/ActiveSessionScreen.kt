@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +57,15 @@ import com.focusritual.app.feature.timer.ui.ProgressSection
 import com.focusritual.app.feature.timer.ui.SessionTopBar
 import com.focusritual.app.feature.timer.ui.SleepExitButton
 import com.focusritual.app.feature.timer.ui.TimerBackground
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.pause
+import focusritual.composeapp.generated.resources.resume
+import focusritual.composeapp.generated.resources.timer_phase_break
+import focusritual.composeapp.generated.resources.timer_phase_complete
+import focusritual.composeapp.generated.resources.timer_phase_focus
+import focusritual.composeapp.generated.resources.timer_phase_rest
+import focusritual.composeapp.generated.resources.timer_phase_sleep
+import org.jetbrains.compose.resources.stringResource
 
 private const val SLEEP_FADE_OUT_MS = 30_000L
 
@@ -177,7 +185,7 @@ private fun ActiveSessionScreenContent(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = (1f - sleepFade) * 0.6f)),
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = (1f - sleepFade) * 0.6f)),
             )
         }
 
@@ -221,7 +229,7 @@ private fun ActiveSessionScreenContent(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = uiState.phaseLabel,
+                        text = activePhaseLabel(uiState),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Normal,
                         letterSpacing = 2.sp,
@@ -282,7 +290,11 @@ private fun ActiveSessionScreenContent(
                                     ) {
                                         Icon(
                                             imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                                            contentDescription = if (uiState.isPaused) "Resume" else "Pause",
+                                            contentDescription = if (uiState.isPaused) {
+                                                stringResource(Res.string.resume)
+                                            } else {
+                                                stringResource(Res.string.pause)
+                                            },
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(32.dp),
                                         )
@@ -323,3 +335,13 @@ private fun ActiveSessionScreenContent(
         }
     }
 }
+
+@Composable
+private fun activePhaseLabel(uiState: ActiveSessionUiState): String = when {
+    uiState.isSleepFadingOut -> stringResource(Res.string.timer_phase_rest)
+    uiState.isCompleted && uiState.isSleepMode -> stringResource(Res.string.timer_phase_rest)
+    uiState.isCompleted -> stringResource(Res.string.timer_phase_complete)
+    uiState.isSleepMode -> stringResource(Res.string.timer_phase_sleep)
+    uiState.phase == SessionPhase.Focus -> stringResource(Res.string.timer_phase_focus)
+    else -> stringResource(Res.string.timer_phase_break)
+}.uppercase()

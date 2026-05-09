@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_organic_motion
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun GlobalOrganicMotionRow(
@@ -58,7 +61,7 @@ internal fun GlobalOrganicMotionRow(
             )
             Spacer(Modifier.width(10.dp))
             Text(
-                text = "Organic motion",
+                text = stringResource(Res.string.mixer_organic_motion),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Light,
                 color = colorScheme.onSurface.copy(alpha = 0.55f),

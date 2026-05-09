@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +38,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.close
+import focusritual.composeapp.generated.resources.end
+import focusritual.composeapp.generated.resources.end_sleep
+import focusritual.composeapp.generated.resources.session_complete
+import focusritual.composeapp.generated.resources.skip
+import focusritual.composeapp.generated.resources.timer_cycle_of
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SessionTopBar(onClose: () -> Unit) {
@@ -48,15 +55,20 @@ internal fun SessionTopBar(onClose: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
-        IconButton(
-            onClick = onClose,
+        Box(
             modifier = Modifier
                 .size(36.dp)
-                .align(Alignment.CenterStart),
+                .align(Alignment.CenterStart)
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onClose() },
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.close),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.size(20.dp),
             )
@@ -75,7 +87,11 @@ internal fun ProgressSection(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = if (isCompleted) "Session complete" else "Cycle $currentCycle of $totalCycles",
+            text = if (isCompleted) {
+                stringResource(Res.string.session_complete)
+            } else {
+                stringResource(Res.string.timer_cycle_of, currentCycle, totalCycles)
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 0.5.sp,
@@ -138,15 +154,15 @@ internal fun BottomControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.SkipNext,
-                    contentDescription = "Skip",
+                    contentDescription = stringResource(Res.string.skip),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Skip",
+                    text = stringResource(Res.string.skip),
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -163,15 +179,15 @@ internal fun BottomControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.StopCircle,
-                    contentDescription = "End",
+                    contentDescription = stringResource(Res.string.end),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "End",
+                    text = stringResource(Res.string.end),
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
             }
@@ -209,9 +225,9 @@ internal fun SleepExitButton(onStop: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "End sleep",
+                text = stringResource(Res.string.end_sleep),
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Normal,
                 letterSpacing = 0.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

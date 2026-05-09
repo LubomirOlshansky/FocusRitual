@@ -39,6 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.feature.mixer.domain.MixPreset
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.load_mix
+import focusritual.composeapp.generated.resources.mixer_sound_count_many
+import focusritual.composeapp.generated.resources.mixer_sound_count_one
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PresetCard(
@@ -53,9 +58,9 @@ internal fun PresetCard(
     val primary = MaterialTheme.colorScheme.primary
     val backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val borderColor = if (isLoaded) {
-        primary.copy(alpha = 0.30f)
+        primary.copy(alpha = 0.24f)
     } else {
-        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
     }
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -147,7 +152,7 @@ internal fun PresetCard(
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .border(
                         width = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.24f),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
                         shape = CircleShape,
                     ),
                 contentAlignment = Alignment.Center,
@@ -174,9 +179,9 @@ private fun PresetThumbnail(isLoaded: Boolean) {
         MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
     }
     val borderColor = if (isLoaded) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.32f)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
     } else {
-        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
     }
     val tint = if (isLoaded) {
         MaterialTheme.colorScheme.primary.copy(alpha = 0.92f)
@@ -232,19 +237,24 @@ private fun PresetLoadButton(onLoad: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Filled.PlayArrow,
-            contentDescription = "Load mix",
+            contentDescription = stringResource(Res.string.load_mix),
             modifier = Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
         )
     }
 }
 
+@Composable
 private fun presetMeta(
     preset: MixPreset,
     soundNamesById: Map<String, String>,
 ): String {
     val soundNames = preset.sounds.map { sound -> soundNamesById[sound.id] ?: sound.id }
     val count = preset.sounds.size
-    val countText = if (count == 1) "1 sound" else "$count sounds"
+    val countText = if (count == 1) {
+        stringResource(Res.string.mixer_sound_count_one)
+    } else {
+        stringResource(Res.string.mixer_sound_count_many, count)
+    }
     return if (soundNames.isEmpty()) countText else soundNames.joinToString(" · ") + " · " + countText
 }

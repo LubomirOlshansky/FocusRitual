@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +32,10 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.component.VolumeSlider
 import com.focusritual.app.feature.mixer.domain.SoundState
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_organic_motion
+import focusritual.composeapp.generated.resources.remove
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ActiveSoundRow(
@@ -76,10 +79,10 @@ internal fun ActiveSoundRow(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFFFFFFF).copy(alpha = 0.04f))
+                        .background(colorScheme.onSurface.copy(alpha = 0.04f))
                         .border(
                             width = 0.5.dp,
-                            color = Color(0xFFFFFFFF).copy(alpha = 0.08f),
+                            color = colorScheme.onSurface.copy(alpha = 0.08f),
                             shape = RoundedCornerShape(8.dp),
                         ),
                     contentAlignment = Alignment.Center,
@@ -108,7 +111,7 @@ internal fun ActiveSoundRow(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.AutoAwesome,
-                        contentDescription = "Organic Motion",
+                        contentDescription = stringResource(Res.string.mixer_organic_motion),
                         modifier = Modifier
                             .size(16.dp)
                             .graphicsLayer { alpha = 0.55f + (0.45f * sparkleAlpha) },
@@ -123,7 +126,7 @@ internal fun ActiveSoundRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Remove",
+                        contentDescription = stringResource(Res.string.remove),
                         modifier = Modifier.size(11.dp),
                         tint = colorScheme.onSurface.copy(alpha = 0.50f),
                     )

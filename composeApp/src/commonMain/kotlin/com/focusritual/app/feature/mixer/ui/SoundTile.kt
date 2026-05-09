@@ -45,6 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.feature.mixer.domain.SoundState
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_organic_motion
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SoundTile(
@@ -172,7 +175,7 @@ fun SoundTile(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.AutoAwesome,
-                        contentDescription = "Organic Motion",
+                        contentDescription = stringResource(Res.string.mixer_organic_motion),
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.primary,
                     )

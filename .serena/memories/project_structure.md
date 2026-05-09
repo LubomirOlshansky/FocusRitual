@@ -5,130 +5,98 @@
 ```
 FocusRitual/
 ├── build.gradle.kts, settings.gradle.kts, gradle.properties
-├── gradle/libs.versions.toml            ← version catalog (all deps here)
+├── gradle/libs.versions.toml
 ├── composeApp/                          ← KMP + Compose shared module
 │   └── src/{commonMain,androidMain,iosMain,commonTest}/kotlin/com/focusritual/app/
-├── iosApp/                              ← SwiftUI host + FocusRitualWidget extension
+├── iosApp/                              ← SwiftUI host + WidgetKit/Live Activity extension
 ├── docs/                                ← living architecture docs
-└── plans/                               ← refactor/feature plans
+└── plans/                               ← implementation/refactor plans
 ```
 
-## `com.focusritual.app` — Four Top-Level Groups
+## Top-Level Package Groups
+Strict layer direction: `app/` → `feature/` → `core/`.
 
-Post structure-refactor (plans/structure-refactor.md). **Strict layer direction: `app/` → `feature/` → `core/`.**
+### Root (`commonMain`)
+- `App.kt` — root composable, state-based `AppScreen` navigation via `Crossfade`, hoists `MixerViewModel`.
+- `Platform.kt` — generic expect/actual platform metadata.
 
-### Root (commonMain only)
-- `App.kt` — root composable, `AppScreen` navigation via `Crossfade`
-- `Platform.kt` — expect/actual platform interface
+### `app/integration/`
+Cross-feature glue that legitimately reads multiple feature states.
+- `liveactivity/` — common Live Activity effect + platform actuals.
 
-### `app/integration/` — multi-feature glue
-Explicit home for code that legitimately spans multiple features.
-- `app/integration/liveactivity/`
-  - `LiveActivityEffect.kt` (commonMain, `expect`)
-  - `LiveActivityEffect.ios.kt` (iosMain actual)
-  - `LiveActivityEffect.android.kt` (androidMain actual — note `.android.kt` suffix, D5 of plan)
-
-### `core/` — platform infra + design system (no `feature/` imports allowed)
-- `core/audio/` — `AudioCommand`, `AudioPlayer` (expect), `AudioPlayerFactory`, `AudioPlayerHandle`, `OrganicMotionEngine`, `SoundMixer`
-  - androidMain: `AudioPlayer.android.kt`, `AndroidAudioContext.kt`, `FocusAudioService.kt`
-  - iosMain: `AudioPlayer.ios.kt`
+### `core/`
+Cross-cutting platform infra + design system. `core/` must not import `feature/`.
+- `core/audio/`
+  - Common: `AudioCommand`, `AudioPlayer` expect, `AudioPlayerFactory`, `AudioPlayerHandle`, `OrganicMotionEngine`, `SoundMixer`, `AudioSettingsRepository`, `AudioPlaybackSettings`.
+  - Android: `AudioPlayer.android.kt`, `AndroidAudioContext.kt`, `FocusAudioService.kt`, `AndroidAudioFocusController.kt`.
+  - iOS: `AudioPlayer.ios.kt`, `IosAudioSessionController.kt`.
+- `core/haptic/`
+  - Common: `HapticFeedbackType`, `HapticEngine` expect, `HapticController`, `HapticSettingsRepository`.
+  - Android/iOS: platform haptic engine actuals; Android also uses `AndroidHapticContext` initialized from `MainActivity`.
+- `core/platformaction/`
+  - Common: `PlatformActions`, `LocalPlatformActions`, `ProvidePlatformActions`, `rememberPlatformActions()` expect.
+  - Android/iOS: actual providers plus `AndroidPlatformActions` / `IosPlatformActions`.
 - `core/designsystem/`
-  - `theme/` — `Color`, `Type`, `Theme`, `Spacing`, `Motion`
-  - `component/` — `AirPlayButton`, `CloseButton`, `PlayButton`, `ProtectFocusCard`, `ProtectFocusSetupSheet`, `StartSessionButton`, `StepperRow`, `VolumeSlider` (iOS/Android actuals per-platform)
-- `core/protectfocus/` — `ProtectFocusContract`, `ProtectFocusController` (expect); iosMain: `ScreenTimeBridge`, `MockScreenTimeHandler`, `ProtectFocusController.ios.kt`
-- `core/liveactivity/` *(iosMain only)* — pure platform infra: `LiveActivityBridge`, `LiveActivityController`, `LiveActivityState`. (The cross-feature **effect** lives under `app/integration/`.)
+  - `theme/`: color, type, spacing, motion, theme wiring.
+  - `component/`: reusable controls such as play/start/close buttons, sliders, Protect Focus components.
+- `core/protectfocus/` — expect/actual Screen Time / Focus protection bridge.
+- `core/liveactivity/` (iOS) — Swift bridge-facing Live Activity infra.
 
-### `feature/` — user-facing features
-
-**Canonical feature shape (D1 of plan):**
+### `feature/`
+Canonical shape:
 ```
-<Feature>Contract.kt        ← UiState + Intent
-<Feature>ViewModel.kt
-<Feature>Screen.kt          ← stateful + stateless split
-ui/                         ← sub-composables (optional `ui/modal/`)
-domain/                     ← models, repos, mappers, orchestrators, contracts
-  usecase/                  ← single-responsibility use cases
-data/                       ← persistence/network (none exist today)
+feature/<name>/
+  <Name>Contract.kt
+  <Name>ViewModel.kt
+  <Name>Screen.kt or screen-level sheet/modal composable
+  ui/
+  domain/
+    usecase/
+  data/
 ```
+Small features may omit folders until needed.
 
-**Features:**
-- `feature/about/` — flat: `AboutSheet.kt`, `SoundCredit.kt`
+Current features:
 - `feature/mixer/`
-  - root: `MixerContract`, `MixerViewModel`, `MixerScreen`, `CurrentMixModal`
-  - `ui/`: `CategoryPillRow`, `CurrentMixPanel`, `HeroSessionButton`, `ImmersiveBackground`, `SectionHeader`, `SoundTile`
-  - `ui/modal/`: `ActiveSoundRow`, `DoneButton`, `GlobalOrganicMotionRow`, `ModalHeader`
-  - `domain/`: `MixAudioOrchestrator`, `MixRepository`, `MixerDtos`, `MixerMappers`, `SoundCatalog`, `SoundCatalogImpl`, `SoundState`
-  - `domain/usecase/`: 7 use cases (Adjust/Remove/SelectCategory/ToggleGlobalOrganicMotion/ToggleOrganicMotion/TogglePlayback/ToggleSound)
+  - Root: `MixerContract`, `MixerViewModel`, `MixerScreen`, `CurrentMixModal`, `SaveMixDialog`.
+  - `domain/`: `MixAudioOrchestrator`, `MixPreset`, `MixRepository`, DTOs/mappers/catalog/state, use cases.
+  - `data/`: `JsonStore`, `MixPresetRepository`, `AmbientStateRepository` for persisted saved mixes and ambient snapshot.
+  - `ui/` and `ui/modal/`: mixer surface and modal pieces.
+- `feature/settings/`
+  - Root: `SettingsContract`, `SettingsViewModel`, `SettingsModal` (currently in `SettingsSheet.kt`), `SettingsBackHandler` expect.
+  - `domain/`: `SettingsRepository` facade over audio settings, `SoundCredit` data.
+  - `ui/`: `SettingsHome`, `SettingsRows`, `SettingsDetails`, `SettingsSheetChrome`/`SettingsFrame`.
 - `feature/session/`
-  - root: `FocusSessionContract`, `FocusSessionViewModel`, `FocusSessionScreen`, `SessionPreferences`
-  - `ui/`: `SessionModeToggle`
+  - Root: `FocusSessionContract`, `FocusSessionViewModel`, `FocusSessionScreen`, `SessionPreferences`.
+  - `ui/`: session subcomponents.
 - `feature/timer/`
-  - root: `ActiveSessionContract`, `ActiveSessionViewModel`, `ActiveSessionScreen`, `SessionCompleteScreen`
-  - `ui/`: `AtmosphericField`, `SessionBackground`, `SessionControls`
+  - Root: `ActiveSessionContract`, `ActiveSessionViewModel`, `ActiveSessionScreen`, `SessionCompleteScreen`.
+  - `ui/`: atmospheric/session visual components.
 
-### Platform entry points (source-set roots)
-- androidMain: `MainActivity.kt`, `Platform.android.kt`
-- iosMain: `MainViewController.kt`, `Platform.ios.kt`
+Removed / replaced:
+- `feature/about/` has been replaced by `feature/settings/`; sound credits now live under Settings.
 
-## Layer Invariant (enforced)
-- **`core/` must NOT import `feature/`.** Verified via grep across all three source sets.
-- **`feature/` must NOT import from another `feature/`.**
-- Cross-feature glue lives in `app/integration/` only.
-- Platform actuals use `<Name>.<platform>.kt` suffix (`.ios.kt`, `.android.kt`).
+## Entry Points
+- Android: `MainActivity.onCreate()` → `ProvidePlatformActions { App() }`.
+- iOS: `MainViewController()` → `ComposeUIViewController { ProvidePlatformActions { App() } }`.
 
-## Architecture
-
-### Navigation
-- No nav library — `AppScreen` sealed interface in `App.kt` + `Crossfade(tween(300))`.
-- `MixerViewModel` hoisted in `App.kt` and shared across screens for audio continuity.
-
-### MVI (all features)
-- `UiState` data class exposed via `StateFlow`
-- `Intent` sealed interface (each action = `data object`/`data class`)
-- `ViewModel` exposes `val uiState: StateFlow<UiState>` + single `fun onIntent(intent)`
-- Screen split: stateful `<Feature>Screen(viewModel)` + stateless `<Feature>ScreenContent(uiState, onIntent)`
-
-### Audio
-- `AudioPlayer` expect/actual (Android: MediaPlayer+temp file; iOS: AVAudioPlayer)
-- `SoundMixer.syncState(sounds, isPlaying, masterVolume)` — declarative sync
-- `MixerViewModel` exposes `setSessionMasterVolume(Float?)` for session-aware fade
-- `combine(_uiState, _sessionMasterVolume)` drives reactive playback
-
-### Sound-Session Integration
-- `ActiveSessionScreen` receives `onSoundControl: (Float?) -> Unit`
-- Phase volume: Focus=1f, Break/Paused/Exiting=0f, with `animateFloatAsState(tween(400))`
-- `DisposableEffect` restores `onSoundControl(null)` on exit
-
-### Protect Focus (iOS Screen Time)
-- Bridge pattern: Kotlin `ScreenTimeHandler` interface (iosMain, → ObjC `@protocol`) + `ScreenTimeBridge` singleton
-- `ScreenTimeManager.swift` conforms and registers at app startup
-- `ProtectFocusController` expect class; iOS actual uses `suspendCancellableCoroutine`
-- State machine: `Idle → SheetOpen → SettingUp → SetupCompleted/Cancelled/PermissionDenied`
-
-### Live Activity (iOS)
-- Platform infra in `iosMain core/liveactivity/` (Bridge/Controller/State)
-- Cross-feature driver in `commonMain app/integration/liveactivity/LiveActivityEffect.kt` (reads `MixerUiState` + `ActiveSessionUiState` + `SessionMode`)
-- Android actual is a no-op stub
-
-## Screen Flow
-```
-MixerScreen → FocusSessionScreen → ActiveSessionScreen
-     ↑              ↑                      │
-     └──────────────┴─────── onFinish ─────┘
-```
+## Architecture Notes
+- Navigation is currently state-based (`AppScreen` sealed interface + `Crossfade`), not a true back stack.
+- `MixerViewModel` is hoisted in `App.kt` so audio continues across session screens.
+- Feature presentation follows MVI: `UiState`, `Intent`, `ViewModel`, single `onIntent()`.
+- Platform side effects should flow through platform abstractions in `core/`; for feature actions, prefer ViewModel effects collected by composables rather than inline platform calls in UI.
+- Swift-only APIs use the bridge pattern: Kotlin interface/protocol in `iosMain`, singleton bridge/controller, Swift implementation registered at app startup.
 
 ## Source Set Rules
 | Code | Source Set |
 |------|-----------|
-| UI, ViewModels, models, design system | commonMain |
-| Audio actuals, platform APIs (actual) | androidMain / iosMain |
-| Android-only (Activity, Context, Service) | androidMain |
-| iOS-only (UIKit interop, Live Activity bridge, ScreenTime bridge) | iosMain |
+| UI, ViewModels, models, repositories, pure domain | `commonMain` |
+| Android Activity/Context/Service/audio focus | `androidMain` |
+| iOS UIKit/AVFoundation/ActivityKit/Screen Time bridges | `iosMain` |
+| Common tests and fakes | `commonTest` |
 
-## Entry Points
-- Android: `MainActivity.onCreate()` → `setContent { App() }`
-- iOS: `MainViewController()` → `ComposeUIViewController { App() }`
-
-## Resources
-- `composeResources/drawable/background.png`
-- `composeResources/files/*.m4a` — 9 ambient sounds
+## Guardrails
+- `core/` must not import `feature/`.
+- `feature/<A>` must not import `feature/<B>`.
+- Cross-feature code belongs in `app/integration/`.
+- Platform actual files use `<Name>.<platform>.kt` suffix.

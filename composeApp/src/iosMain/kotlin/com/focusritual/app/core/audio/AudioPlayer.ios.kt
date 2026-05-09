@@ -5,22 +5,19 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.AVFAudio.AVAudioPlayer
-import platform.AVFAudio.AVAudioSession
-import platform.AVFAudio.AVAudioSessionCategoryPlayback
-import platform.AVFAudio.setActive
 import platform.Foundation.NSData
 import platform.Foundation.create
 
 actual class AudioPlayer actual constructor() {
     private var avPlayer: AVAudioPlayer? = null
+    private var sessionStarted = false
 
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     actual fun play(data: ByteArray, loop: Boolean) {
         release()
 
-        val session = AVAudioSession.sharedInstance()
-        session.setCategory(AVAudioSessionCategoryPlayback, error = null)
-        session.setActive(true, error = null)
+        IosAudioSessionController.onPlaybackStarted()
+        sessionStarted = true
 
         val nsData = data.usePinned { pinned ->
             NSData.create(
@@ -47,6 +44,10 @@ actual class AudioPlayer actual constructor() {
     actual fun release() {
         avPlayer?.stop()
         avPlayer = null
+        if (sessionStarted) {
+            sessionStarted = false
+            IosAudioSessionController.onPlaybackStopped()
+        }
     }
 
     actual val isPlaying: Boolean

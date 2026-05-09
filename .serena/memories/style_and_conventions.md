@@ -1,108 +1,81 @@
 # FocusRitual — Code Style & Conventions
 
-> **See also:**
-> - `design_system` memory — canonical Design Language v1.0 (colors, typography, components, animation, motion/interaction/border rules, hard NEVERS, file map). All visual decisions must conform to it.
-> - `project_structure` memory — concrete file layout & architecture per-feature.
+See also: `design_system` for visual rules and `project_structure` for current layout.
 
----
+## Architectural Invariants
 
-## Architectural Invariants (enforced — non-negotiable)
-
-These rules are verified via grep guardrails. Any PR that violates them must be rejected or refactored.
-
-### Layer direction
+Layer direction:
 ```
 app/  →  feature/  →  core/
 ```
-- **`core/` MUST NOT import `feature/`.** Grep guardrail:
-  `grep -rn "import com.focusritual.app.feature" composeApp/src/*/kotlin/com/focusritual/app/core/` → must return **0**.
-- **`feature/<A>` MUST NOT import `feature/<B>`.** Features are siblings; they don't know about each other.
-- **`app/integration/`** is the ONLY place where code may import from multiple features. Use it for composable "effects" or adapters that bridge features (e.g. Live Activity driver reading both mixer + timer state).
-- `app/` may import anything. `core/` may import only other `core/` and stdlib/framework.
+- `core/` must not import `feature/`.
+- Features must not import sibling features.
+- Cross-feature effects/adapters belong under `app/integration/`.
+- `app/` may compose features and own root navigation.
 
-### Canonical feature shape (D1 of plans/structure-refactor.md)
-Every feature under `feature/<name>/` follows this exact layout:
+## Canonical Feature Shape
 ```
 feature/<name>/
-  <Name>Contract.kt        ← UiState data class + Intent sealed interface
-  <Name>ViewModel.kt       ← exposes StateFlow<UiState> + onIntent()
-  <Name>Screen.kt          ← stateful <Name>Screen + stateless <Name>ScreenContent
-  ui/                      ← ALL internal sub-composables live here
-    modal/                 ← (optional) modal/sheet sub-composables
+  <Name>Contract.kt        ← UiState + Intent (+ Effect when needed)
+  <Name>ViewModel.kt       ← StateFlow<UiState> + onIntent()
+  <Name>Screen.kt          ← stateful + stateless split, or screen-level modal/sheet
+  ui/                      ← internal sub-composables
+    modal/                 ← optional modal pieces
   domain/                  ← models, repos, mappers, orchestrators, contracts
-    usecase/               ← single-responsibility use cases
-  data/                    ← (optional) persistence/network — none today
+    usecase/               ← single-action use cases
+  data/                    ← persistence/network implementation when needed
 ```
-- Feature-root may also hold a second screen-level composable (e.g. `CurrentMixModal.kt`, `SessionCompleteScreen.kt`) — treat them as screens, not as `ui/` fragments.
-- Small features may omit `ui/` or `domain/` until they're needed (e.g. `feature/about/`).
+Feature-root may hold screen-level composables such as `CurrentMixModal`, `SaveMixDialog`, or `SettingsSheet`.
 
-### Where does new code go?
+## Placement Rules
 | Scope | Location |
 |---|---|
-| UI sub-composable used only by feature X | `feature/<x>/ui/` |
-| Reusable UI across features (truly generic) | `core/designsystem/component/` |
-| Domain model/repo/use-case for feature X | `feature/<x>/domain/` |
-| Cross-cutting platform API (expect/actual) | `core/<module>/` |
-| Glue that reads from >1 feature's UiState | `app/integration/<topic>/` |
-| Platform-specific actual | same path as expect, with `.ios.kt` / `.android.kt` suffix |
-
-### Platform actuals
-- File name: `<Name>.<platform>.kt` (e.g. `Platform.ios.kt`, `AudioPlayer.android.kt`, `LiveActivityEffect.android.kt`).
-- Package must match the `expect` declaration exactly.
-
----
+| Feature-local UI | `feature/<x>/ui/` |
+| Reusable UI | `core/designsystem/component/` |
+| Feature domain model/repo/use case | `feature/<x>/domain/` |
+| Feature persistence implementation | `feature/<x>/data/` |
+| Cross-cutting platform API | `core/<module>/` |
+| Multi-feature glue | `app/integration/<topic>/` |
+| App-level navigation helper | `app/navigation/` or `core/navigation/` depending on whether it imports feature contracts |
 
 ## Kotlin Style
-- Follow **Kotlin official code style** (`kotlin.code.style=official` in gradle.properties)
-- Root package: `com.focusritual.app`
-- Feature packages: `com.focusritual.app.feature.<feature_name>[.ui|.domain|.domain.usecase]`
-- Core packages: `com.focusritual.app.core.<module_name>`
-- Integration packages: `com.focusritual.app.app.integration.<topic>`
+- Kotlin official style (`kotlin.code.style=official`).
+- Root package: `com.focusritual.app`.
+- PascalCase files matching primary symbols.
+- Platform actuals use `<Name>.<platform>.kt` and matching package declarations.
+- Keep comments sparse and useful.
 
-## Naming Conventions
-- **Files:** PascalCase matching the primary class/composable (`MixerScreen.kt`, `PlayButton.kt`)
-- **Contract files:** `<Feature>Contract.kt` — `UiState` data class + `Intent` sealed interface
-- **ViewModel files:** `<Feature>ViewModel.kt`
-- **Screen files:** `<Feature>Screen.kt`
-- **Use-case files:** `<Verb><Noun>UseCase.kt` (e.g. `AdjustVolumeUseCase.kt`)
-- **Theme files:** `Color.kt`, `Type.kt`, `Theme.kt`, `Spacing.kt`, `Motion.kt`
-- **Platform actuals:** `<Name>.<platform>.kt`
-
-## Compose Conventions
-- Top-level composables are `@Composable` functions in PascalCase
-- Stateful composable: takes ViewModel, collects state — `MixerScreen(viewModel)`
-- Stateless composable: takes UiState + event lambdas — `MixerScreenContent(uiState, onIntent)`
-- Internal sub-composables live in `feature/<x>/ui/` with `internal` visibility
-- Feature code may **only** use `MaterialTheme.colorScheme.*`, `MaterialTheme.typography.*`, `Spacing.*`, `FocusRitualEasing.*` — never reference raw `Color.kt` tokens directly
-- Hardcoded hex (`Color(0xFF…)`) is forbidden in feature code (single documented exception: `Color(0xFF2A3240)` in `SessionModeToggle`)
-- No `Color.White`, no `Color.Black` anywhere
-- No Material ripple — set `indication = null` on every clickable; use `scale(0.97f)` press feedback
-- LazyColumn items: hoist per-item lambdas via `remember(id, onIntent) { … }` to avoid per-frame allocations
+## Compose Style
+- Stateful composable collects state and owns ViewModel lookup.
+- Stateless content takes `UiState` and lambdas/intent dispatchers.
+- Internal sub-composables in `ui/` should be `internal`.
+- Use `MaterialTheme.colorScheme.*`, `MaterialTheme.typography.*`, `Spacing.*`, `FocusRitualEasing.*` in feature UI.
+- No raw `Color(0xFF...)` in feature code except documented design-system exceptions.
+- No `Color.White` / `Color.Black`.
+- No Material ripple; custom clickables use `indication = null` with press-scale feedback.
+- Avoid mixed `Modifier.padding(horizontal = ..., bottom = ...)`; use explicit `start`/`end` when combined with one-sided padding.
 
 ## MVI Pattern
-- **UiState:** `@Immutable data class` with sensible defaults; single source of truth for the screen
-- **Intent:** Sealed interface; each action is a `data object` or `data class`
-- **ViewModel:** extends `ViewModel()`; exposes `val uiState: StateFlow<UiState>` + single `fun onIntent(intent: Intent)` entry point
-- **State updates:** `_uiState.update { it.copy(...) }` (never mutate in place)
-- **Side effects:** launched inside `viewModelScope`, NEVER inside `MutableStateFlow.update {}` lambdas (learned in mixer refactor — update blocks must be pure)
-- **Property init order:** don't reference `lateinit` properties from class-level property initializers (e.g. `combine(…)`). Use a `MutableStateFlow` bridge if a dependency is only available after `start()`/`init{}`.
+- `UiState`: `@Immutable data class` with defaults.
+- `Intent`: sealed interface using `data object` / `data class`.
+- `ViewModel`: exposes `val uiState: StateFlow<UiState>` and one `onIntent(intent)`.
+- State updates use `MutableStateFlow.update { ... }`; update lambdas must be pure.
+- Side effects run in coroutines outside `update {}`.
+- For platform actions from a feature, prefer `SettingsEffect`/`FeatureEffect` emitted by the ViewModel and collected by the composable, which then calls `PlatformActions`. Do not inject UIKit/Android APIs into common ViewModels.
+- Reset transient feature state explicitly on dismiss when a sheet/modal ViewModel can outlive the visible sheet.
 
-## Domain Layer Conventions
-- **Repositories:** expose `StateFlow<T>` + `update { }` mutator; keep persistence/audio side-effects OUT.
-- **Use cases:** one class per action; take repo or flow in constructor; expose a single `operator fun invoke(args)`.
-- **Mappers:** pure top-level `fun` in a `<Feature>Mappers.kt` file — no state, no side effects, deterministic.
-- **DTOs:** `@Immutable data class` in `<Feature>Dtos.kt` — view-oriented projections of domain state.
+## Domain/Data Conventions
+- Repositories expose `StateFlow<T>` plus narrow mutators.
+- Persistence implementation belongs in `data/`; domain/UI should not know JSON/key details.
+- Mappers are pure top-level functions.
+- DTOs and domain state are immutable data classes.
+
+## Platform Abstractions
+- Use `expect`/`actual` for platform APIs.
+- UIKit/AVFoundation interop in `iosMain` needs `@OptIn(ExperimentalForeignApi::class)`.
+- Platform action providers live in `core/platformaction`; feature code should depend on the `PlatformActions` interface only at the composable effect boundary.
 
 ## Testing
-- Tests live in `commonTest/kotlin/com/focusritual/app/**` (flat structure — NOT mirrored to production packages per plan D7).
-- Cover: mappers (pure), use cases (with fake repos), audio lifecycle (with `FakeAudioPlayerFactory`), ViewModel construction (to catch property-init ordering bugs).
-- `AudioPlayer` is `expect class` → NOT subclassable in commonTest. Use `AudioPlayerHandle` interface + `FakeAudioPlayerFactory` instead.
-
-## General Rules
-- Keep everything in `commonMain` unless a platform-specific API is needed
-- Use `expect`/`actual` for platform abstractions
-- No Android-specific imports in commonMain
-- Minimal, clean code — avoid over-engineering
-- No unnecessary comments, docstrings, or type annotations on obvious types
-- `@OptIn(ExperimentalForeignApi::class)` is required for UIKit interop in iosMain
-- Avoid mixing `Modifier.padding(horizontal=, bottom=)` in a single call (Compose pitfall — see `/memories/repo/build-validation.md`)
+- Tests live in `commonTest/kotlin/com/focusritual/app/**`.
+- Cover pure mappers/use cases, repository behavior, audio lifecycle, and ViewModel construction smoke tests.
+- `AudioPlayer` is an `expect class`; use `AudioPlayerHandle` + fake factory for tests.

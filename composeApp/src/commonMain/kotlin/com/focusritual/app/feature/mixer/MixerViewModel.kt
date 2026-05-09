@@ -2,6 +2,7 @@ package com.focusritual.app.feature.mixer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.focusritual.app.core.haptic.HapticController
 import com.focusritual.app.core.util.currentTimeMillis
 import com.focusritual.app.feature.mixer.data.AmbientSnapshot
 import com.focusritual.app.feature.mixer.data.AmbientStateRepository
@@ -41,6 +42,7 @@ class MixerViewModel(
     private val ambientRepo: AmbientStateRepository = AmbientStateRepository(),
     private val repo: MixRepository = MixRepository(catalog, ambientRepo.read()?.sounds),
     private val orchestrator: MixAudioOrchestrator = MixAudioOrchestrator(catalog),
+    private val hapticController: HapticController = HapticController(),
     private val toggleSound: ToggleSoundUseCase = ToggleSoundUseCase(repo),
     private val adjustVolume: AdjustVolumeUseCase = AdjustVolumeUseCase(repo),
     private val toggleOrganicMotion: ToggleOrganicMotionUseCase = ToggleOrganicMotionUseCase(repo),
@@ -132,8 +134,12 @@ class MixerViewModel(
         when (intent) {
             MixerIntent.TogglePlayback -> togglePlayback()
             is MixerIntent.ToggleSound -> {
+                val wasDisabled = repo.state.value.firstOrNull { it.id == intent.soundId }?.isEnabled == false
                 markDirtyIfNeeded()
                 toggleSound(intent.soundId)
+                if (wasDisabled) {
+                    hapticController.soundTileEnabled()
+                }
             }
             is MixerIntent.AdjustVolume -> {
                 markDirtyIfNeeded()
@@ -190,6 +196,7 @@ class MixerViewModel(
         repo.loadSnapshot(preset.sounds)
         _loadedPresetId.value = preset.id
         _isDirtyFromPreset.value = false
+        hapticController.mixLoaded()
     }
 
     private fun generatePresetId(): String =

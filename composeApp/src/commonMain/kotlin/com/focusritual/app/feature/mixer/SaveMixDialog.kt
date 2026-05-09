@@ -51,7 +51,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
@@ -64,9 +63,18 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.feature.mixer.domain.SoundState
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.cancel
+import focusritual.composeapp.generated.resources.save
+import focusritual.composeapp.generated.resources.save_mix_duplicate
+import focusritual.composeapp.generated.resources.save_mix_helper
+import focusritual.composeapp.generated.resources.save_mix_placeholder
+import focusritual.composeapp.generated.resources.save_mix_subtitle
+import focusritual.composeapp.generated.resources.save_mix_title
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 enum class SaveDialogState { Input, Saved }
 
@@ -143,7 +151,7 @@ private fun DialogCard(
             .padding(horizontal = 28.dp)
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF191E25))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f))
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
@@ -214,9 +222,9 @@ private fun InputContent(
     val canSave = trimmedName.isNotEmpty() && !nameCollides
     val focusRequester = remember { FocusRequester() }
     val helperText = if (nameCollides) {
-        "A mix with this name already exists."
+        stringResource(Res.string.save_mix_duplicate)
     } else {
-        "Saved mixes appear on the mixer screen."
+        stringResource(Res.string.save_mix_helper)
     }
     val helperFontSize = if (nameCollides) 9.sp else 10.sp
     val helperLineHeight = if (nameCollides) 13.5.sp else 14.5.sp
@@ -237,7 +245,7 @@ private fun InputContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Save this mix",
+            text = stringResource(Res.string.save_mix_title),
             fontSize = 14.sp,
             fontWeight = FontWeight.Light,
             letterSpacing = (-0.02).em,
@@ -246,7 +254,7 @@ private fun InputContent(
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = "Name your sanctuary",
+            text = stringResource(Res.string.save_mix_subtitle),
             fontSize = 10.sp,
             fontWeight = FontWeight.Light,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.30f),
@@ -504,7 +512,7 @@ private fun MixNameInput(
                     ) {
                         if (value.isEmpty()) {
                             Text(
-                                text = "e.g. Late night rain",
+                                text = stringResource(Res.string.save_mix_placeholder),
                                 style = inputTextStyle.copy(
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.26f),
                                 ),
@@ -618,7 +626,7 @@ private fun SaveActionButton(
         }
 
         Text(
-            text = "Save",
+            text = stringResource(Res.string.save),
             fontSize = 12.sp,
             fontWeight = FontWeight.Light,
             color = contentColor,
@@ -651,7 +659,7 @@ private fun CancelActionButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Cancel",
+            text = stringResource(Res.string.cancel),
             fontSize = 12.sp,
             fontWeight = FontWeight.Light,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.52f),

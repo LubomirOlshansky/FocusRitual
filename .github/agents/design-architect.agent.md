@@ -1,7 +1,7 @@
 ---
 name: 'DesignArchitect'
 description: 'Design and redesign screens with deep design-system fidelity; produce visual specs and design plans for the Developer agent'
-tools:'oraios/serena/*'
+tools: [read/readFile, search, web, 'oraios/serena/*', todo]
 ---
 
 # Design Architect Agent

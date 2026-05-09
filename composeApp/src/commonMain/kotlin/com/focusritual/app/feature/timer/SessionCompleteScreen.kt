@@ -54,7 +54,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.Primary
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.session_complete_subtitle
+import focusritual.composeapp.generated.resources.session_complete_title
+import focusritual.composeapp.generated.resources.start_another
+import focusritual.composeapp.generated.resources.timer_return_to_sanctuary
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 private data class CompletionParticle(
     val x: Float,
@@ -218,7 +224,7 @@ fun SessionCompleteScreen(
                 label = "headlineT",
             )
             Text(
-                text = "Well done.",
+                text = stringResource(Res.string.session_complete_title),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = (-0.025).em,
@@ -244,7 +250,7 @@ fun SessionCompleteScreen(
                 label = "sublineT",
             )
             Text(
-                text = "Your session is complete",
+                text = stringResource(Res.string.session_complete_subtitle),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = 0.02.em,
@@ -296,7 +302,7 @@ fun SessionCompleteScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "RETURN TO SANCTUARY",
+                    text = stringResource(Res.string.timer_return_to_sanctuary).uppercase(),
                     fontSize = 12.sp,
                     letterSpacing = 0.14.em,
                     color = Primary.copy(alpha = 0.75f),
@@ -306,7 +312,7 @@ fun SessionCompleteScreen(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Start another",
+                text = stringResource(Res.string.start_another),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = 0.04.em,

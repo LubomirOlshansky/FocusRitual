@@ -16,6 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.close
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CloseButton(
@@ -39,7 +42,7 @@ fun CloseButton(
     ) {
         Icon(
             imageVector = Icons.Default.Close,
-            contentDescription = "Close",
+            contentDescription = stringResource(Res.string.close),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             modifier = Modifier.size(14.dp),
         )

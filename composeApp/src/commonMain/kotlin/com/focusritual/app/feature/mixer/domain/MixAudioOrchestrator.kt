@@ -1,6 +1,8 @@
 package com.focusritual.app.feature.mixer.domain
 
 import com.focusritual.app.core.audio.AudioCommand
+import com.focusritual.app.core.audio.AudioPlaybackSettings
+import com.focusritual.app.core.audio.AudioSettingsRepository
 import com.focusritual.app.core.audio.OrganicMotionEngine
 import com.focusritual.app.core.audio.SoundMixer
 import kotlinx.coroutines.CoroutineScope
@@ -11,15 +13,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * Owns SoundMixer + OrganicMotionEngine. Replaces the audio-sync `combine`
- * that lived in MixerViewModel and moves all organic-engine side-effects
- * (`enable`/`disable`/`updateBase`) out of `MutableStateFlow.update {}` lambdas
- * — they now run inside `collect { }` bodies, which is the deliberate
- * latent-bug fix flagged by Phase 4.
- */
+private data class AudioSyncState(
+    val sounds: List<SoundState>,
+    val playing: Boolean,
+    val sessionMasterVolume: Float,
+    val playbackSettings: AudioPlaybackSettings,
+    val externalAttenuation: Float,
+)
 
-class MixAudioOrchestrator(private val catalog: SoundCatalog) {
+class MixAudioOrchestrator(
+    private val catalog: SoundCatalog,
+    private val audioSettingsRepository: AudioSettingsRepository = AudioSettingsRepository.Default,
+) {
 
     private val soundMixer = SoundMixer()
     private lateinit var organicEngine: OrganicMotionEngine
@@ -47,22 +52,39 @@ class MixAudioOrchestrator(private val catalog: SoundCatalog) {
                 isPlaying,
                 sessionMasterVolume,
                 organicEngine.offsets,
-            ) { state, playing, sessionVolume, offsets ->
+                audioSettingsRepository.playbackSettings,
+                audioSettingsRepository.externalAudioAttenuation,
+            ) { values ->
+                @Suppress("UNCHECKED_CAST")
+                val state = values[0] as List<SoundState>
+                val playing = values[1] as Boolean
+                val sessionVolume = values[2] as Float?
+                @Suppress("UNCHECKED_CAST")
+                val offsets = values[3] as Map<String, Float>
+                val playbackSettings = values[4] as AudioPlaybackSettings
+                val externalAttenuation = values[5] as Float
                 val adjustedSounds = state.map { sound ->
                     val effectiveVolume = offsets[sound.id] ?: sound.volume
                     sound.copy(volume = effectiveVolume)
                 }
-                Triple(
-                    adjustedSounds,
-                    if (sessionVolume != null) sessionVolume > 0.01f else playing,
-                    sessionVolume ?: 1f,
+                AudioSyncState(
+                    sounds = adjustedSounds,
+                    playing = if (sessionVolume != null) sessionVolume > 0.01f else playing,
+                    sessionMasterVolume = sessionVolume ?: 1f,
+                    playbackSettings = playbackSettings,
+                    externalAttenuation = externalAttenuation,
                 )
-            }.collect { (s, playing, mv) ->
-                val commands = s.map { sound ->
+            }.collect { syncState ->
+                val mixVolume = if (syncState.playbackSettings.mixWithOthersEnabled) {
+                    syncState.playbackSettings.mixWithOthersVolume
+                } else {
+                    1f
+                }
+                val commands = syncState.sounds.map { sound ->
                     AudioCommand(
                         id = sound.id,
-                        volume = sound.volume * mv,
-                        enabled = playing && sound.isEnabled,
+                        volume = sound.volume * syncState.sessionMasterVolume * mixVolume * syncState.externalAttenuation,
+                        enabled = syncState.playing && sound.isEnabled,
                     )
                 }
                 soundMixer.syncState(commands)
@@ -70,7 +92,7 @@ class MixAudioOrchestrator(private val catalog: SoundCatalog) {
         }
 
         // Organic-engine lifecycle — diff-based reaction to repo.state. Side-effects are
-        // invoked exactly once per emission inside `collect { }` (NOT inside `update {}`).
+        // invoked exactly once per emission inside `collect { }` (NOT inside `update { }`).
         scope.launch {
             var prev: List<SoundState> = emptyList()
             sounds.collect { current ->

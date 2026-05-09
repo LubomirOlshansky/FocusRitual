@@ -31,6 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_saved_mixes
+import focusritual.composeapp.generated.resources.mixer_saved_mixes_count
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SavedMixesGhostRow(
@@ -102,7 +106,7 @@ fun SavedMixesGhostRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = "Saved mixes",
+                    text = stringResource(Res.string.mixer_saved_mixes),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Light,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
@@ -110,7 +114,7 @@ fun SavedMixesGhostRow(
                     maxLines = 1,
                 )
                 Text(
-                    text = "$count saved · tap to browse",
+                    text = stringResource(Res.string.mixer_saved_mixes_count, count),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Light,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.32f),

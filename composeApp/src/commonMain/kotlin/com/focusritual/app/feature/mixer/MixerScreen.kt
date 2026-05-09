@@ -3,6 +3,7 @@ package com.focusritual.app.feature.mixer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -17,7 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -33,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.feature.mixer.ui.SoundTile
-import com.focusritual.app.feature.about.AboutSheet
 import com.focusritual.app.feature.mixer.domain.CurrentMixSummary
 import com.focusritual.app.feature.mixer.domain.SoundCategory
 import com.focusritual.app.feature.mixer.domain.SoundState
@@ -44,10 +44,18 @@ import com.focusritual.app.feature.mixer.ui.HeroSessionButton
 import com.focusritual.app.feature.mixer.ui.ImmersiveBackground
 import com.focusritual.app.feature.mixer.ui.PresetsSheet
 import com.focusritual.app.feature.mixer.ui.SectionHeader
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.mixer_organic_all_sounds
+import focusritual.composeapp.generated.resources.mixer_organic_off
+import focusritual.composeapp.generated.resources.mixer_organic_only
+import focusritual.composeapp.generated.resources.mixer_organic_sounds_count
+import focusritual.composeapp.generated.resources.settings_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MixerScreen(
     onStartSession: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: MixerViewModel = viewModel { MixerViewModel() },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -57,6 +65,7 @@ fun MixerScreen(
         filteredSounds = filteredSounds,
         onIntent = viewModel::onIntent,
         onStartSession = onStartSession,
+        onOpenSettings = onOpenSettings,
     )
 }
 
@@ -66,8 +75,8 @@ private fun MixerScreenContent(
     filteredSounds: Map<SoundCategory, List<SoundState>>,
     onIntent: (MixerIntent) -> Unit,
     onStartSession: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
-    var showAboutSheet by remember { mutableStateOf(false) }
     var showCurrentMixModal by remember { mutableStateOf(false) }
     var showPresetsSheet by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
@@ -91,7 +100,7 @@ private fun MixerScreenContent(
     val allSoundsOrganic = remember(activeSounds) {
         activeSounds.isNotEmpty() && activeSounds.all { sound -> sound.organicMotion }
     }
-    val activeOrganicMotionSummary = remember(activeSounds) { organicMotionSummary(activeSounds = activeSounds) }
+    val activeOrganicMotionSummary = organicMotionSummary(activeSounds = activeSounds)
     val alreadySaved = remember(uiState.loadedPresetId, uiState.isDirtyFromPreset) {
         uiState.loadedPresetId != null && !uiState.isDirtyFromPreset
     }
@@ -120,43 +129,44 @@ private fun MixerScreenContent(
                         )
                     }
 
-                    val aboutInteractionSource = remember { MutableInteractionSource() }
-                    val aboutPressed by aboutInteractionSource.collectIsPressedAsState()
-                    val aboutScale by animateFloatAsState(
-                        targetValue = if (aboutPressed) 0.95f else 1f,
-                        animationSpec = tween(200),
+                    val settingsInteractionSource = remember { MutableInteractionSource() }
+                    val settingsPressed by settingsInteractionSource.collectIsPressedAsState()
+                    val settingsScale by animateFloatAsState(
+                        targetValue = if (settingsPressed) 0.97f else 1f,
+                        animationSpec = tween(160),
                     )
-                    val aboutBgAlpha by animateFloatAsState(
-                        targetValue = if (aboutPressed) 0.08f else 0f,
-                        animationSpec = tween(200),
-                    )
-                    val aboutIconAlpha by animateFloatAsState(
-                        targetValue = if (aboutPressed) 0.40f else 0.60f,
-                        animationSpec = tween(200),
+                    val settingsIconAlpha by animateFloatAsState(
+                        targetValue = if (settingsPressed) 0.44f else 0.62f,
+                        animationSpec = tween(160),
                     )
 
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(top = 62.dp, end = 24.dp)
-                            .size(34.dp)
+                            .size(28.dp)
                             .graphicsLayer {
-                                scaleX = aboutScale
-                                scaleY = aboutScale
+                                scaleX = settingsScale
+                                scaleY = settingsScale
                             }
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = aboutBgAlpha))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f))
+                            .border(
+                                width = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
+                                shape = CircleShape,
+                            )
                             .clickable(
-                                interactionSource = aboutInteractionSource,
+                                interactionSource = settingsInteractionSource,
                                 indication = null,
-                            ) { showAboutSheet = true },
+                            ) { onOpenSettings() },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = "About",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = aboutIconAlpha),
-                            modifier = Modifier.size(16.dp),
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = stringResource(Res.string.settings_title),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = settingsIconAlpha),
+                            modifier = Modifier.size(15.dp),
                         )
                     }
                 }
@@ -220,10 +230,6 @@ private fun MixerScreenContent(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
-        if (showAboutSheet) {
-            AboutSheet(onDismiss = { showAboutSheet = false })
-        }
-
         CurrentMixModal(
             isVisible = showCurrentMixModal,
             activeSounds = activeSounds,
@@ -276,12 +282,13 @@ private fun MixerScreenContent(
     }
 }
 
+@Composable
 internal fun organicMotionSummary(activeSounds: List<SoundState>): String {
     val organicSounds = activeSounds.filter { sound -> sound.organicMotion }
     return when {
-        organicSounds.isEmpty() -> "Off"
-        organicSounds.size == activeSounds.size -> "All sounds"
-        organicSounds.size == 1 -> "${organicSounds.first().name} only"
-        else -> "${organicSounds.size} sounds"
+        organicSounds.isEmpty() -> stringResource(Res.string.mixer_organic_off)
+        organicSounds.size == activeSounds.size -> stringResource(Res.string.mixer_organic_all_sounds)
+        organicSounds.size == 1 -> stringResource(Res.string.mixer_organic_only, organicSounds.first().name)
+        else -> stringResource(Res.string.mixer_organic_sounds_count, organicSounds.size)
     }
 }

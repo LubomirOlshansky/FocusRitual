@@ -22,6 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.focusritual.app.core.designsystem.component.CloseButton
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.current_mix_label
+import focusritual.composeapp.generated.resources.current_mix_sounds_active
+import focusritual.composeapp.generated.resources.pause
+import focusritual.composeapp.generated.resources.play
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ModalHeader(
@@ -44,14 +50,14 @@ internal fun ModalHeader(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "CURRENT MIX",
+                text = stringResource(Res.string.current_mix_label).uppercase(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
                 letterSpacing = 0.14.em,
                 color = colorScheme.onSurface.copy(alpha = 0.42f),
             )
             Text(
-                text = "$activeSoundCount sounds active",
+                text = stringResource(Res.string.current_mix_sounds_active, activeSoundCount),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Light,
                 color = colorScheme.onSurface.copy(alpha = 0.62f),
@@ -73,7 +79,11 @@ internal fun ModalHeader(
             ) { isCurrentlyPlaying ->
                 Icon(
                     imageVector = if (isCurrentlyPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isCurrentlyPlaying) "Pause" else "Play",
+                    contentDescription = if (isCurrentlyPlaying) {
+                        stringResource(Res.string.pause)
+                    } else {
+                        stringResource(Res.string.play)
+                    },
                     tint = colorScheme.onSurface.copy(alpha = 0.55f),
                     modifier = Modifier.size(14.dp),
                 )
