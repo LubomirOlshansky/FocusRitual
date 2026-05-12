@@ -21,6 +21,7 @@ private data class AudioSyncState(
     val externalAttenuation: Float,
 )
 
+
 class MixAudioOrchestrator(
     private val catalog: SoundCatalog,
     private val audioSettingsRepository: AudioSettingsRepository = AudioSettingsRepository.Default,
@@ -54,6 +55,7 @@ class MixAudioOrchestrator(
                 organicEngine.offsets,
                 audioSettingsRepository.playbackSettings,
                 audioSettingsRepository.externalAudioAttenuation,
+                audioSettingsRepository.resumeTick,
             ) { values ->
                 @Suppress("UNCHECKED_CAST")
                 val state = values[0] as List<SoundState>
@@ -63,6 +65,9 @@ class MixAudioOrchestrator(
                 val offsets = values[3] as Map<String, Float>
                 val playbackSettings = values[4] as AudioPlaybackSettings
                 val externalAttenuation = values[5] as Float
+                // values[6] is resumeTick — only included so combine re-emits to force
+                // SoundMixer.syncState to re-issue play() on currently-enabled sounds
+                // after an iOS interruption-ended ShouldResume.
                 val adjustedSounds = state.map { sound ->
                     val effectiveVolume = offsets[sound.id] ?: sound.volume
                     sound.copy(volume = effectiveVolume)
@@ -75,15 +80,14 @@ class MixAudioOrchestrator(
                     externalAttenuation = externalAttenuation,
                 )
             }.collect { syncState ->
-                val mixVolume = if (syncState.playbackSettings.mixWithOthersEnabled) {
-                    syncState.playbackSettings.mixWithOthersVolume
-                } else {
-                    1f
-                }
+                // Volume reduction when other audio is playing comes solely from
+                // externalAudioAttenuation (driven by iOS silence-hint observer / polling
+                // applying duckLevel). Enabling "Use while media is playing" by itself
+                // must NOT lower volume.
                 val commands = syncState.sounds.map { sound ->
                     AudioCommand(
                         id = sound.id,
-                        volume = sound.volume * syncState.sessionMasterVolume * mixVolume * syncState.externalAttenuation,
+                        volume = sound.volume * syncState.sessionMasterVolume * syncState.externalAttenuation,
                         enabled = syncState.playing && sound.isEnabled,
                     )
                 }

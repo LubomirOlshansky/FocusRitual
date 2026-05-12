@@ -18,11 +18,11 @@ internal fun SettingsFrame(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val transparentEdge = MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+    val transparentEdge = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0f)
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
+            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.96f)),
     ) {
         Box(
             modifier = Modifier
@@ -32,8 +32,8 @@ internal fun SettingsFrame(
                     Brush.horizontalGradient(
                         listOf(
                             transparentEdge,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
                             transparentEdge,
                         ),
                     ),

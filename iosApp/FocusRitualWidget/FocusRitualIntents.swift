@@ -7,7 +7,7 @@ private let appGroupId = "group.com.focusritual.app"
 private let actionKey = "com.focusritual.liveactivity.action"
 private let darwinNotificationName = "com.focusritual.liveactivity.action"
 
-/// Posts a Darwin notification to wake the main app.
+/// Posts a Darwin notification for the main app to observe while it is alive.
 private func postActionNotification(_ action: String) {
     let defaults = UserDefaults(suiteName: appGroupId)
     defaults?.set(action, forKey: actionKey)
@@ -21,6 +21,14 @@ private func postActionNotification(_ action: String) {
         nil,
         true
     )
+}
+
+/// Ends Live Activities directly from the widget extension so stop/end actions
+/// remain authoritative even when the main app process is not running.
+private func endLiveActivitiesImmediately() async {
+    for activity in Activity<FocusRitualAttributes>.activities {
+        await activity.end(nil, dismissalPolicy: .immediate)
+    }
 }
 
 /// Immediately updates the Live Activity UI by toggling isPaused in the content state.
@@ -67,6 +75,7 @@ struct StopMixIntent: LiveActivityIntent {
     static var description: IntentDescription = "Stop the ambient mix playback"
 
     func perform() async throws -> some IntentResult {
+        await endLiveActivitiesImmediately()
         postActionNotification("stopMix")
         return .result()
     }
@@ -79,6 +88,7 @@ struct EndSessionIntent: LiveActivityIntent {
     static var description: IntentDescription = "End the current focus or sleep session"
 
     func perform() async throws -> some IntentResult {
+        await endLiveActivitiesImmediately()
         postActionNotification("endSession")
         return .result()
     }

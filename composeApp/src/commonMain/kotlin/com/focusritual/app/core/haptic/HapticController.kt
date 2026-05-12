@@ -16,6 +16,26 @@ class HapticController(
         performIfEnabled(HapticFeedbackType.Success)
     }
 
+    fun hapticsEnabled() {
+        engine.perform(HapticFeedbackType.LightImpact)
+    }
+
+    fun mixSaved() {
+        performIfEnabled(HapticFeedbackType.LightImpact)
+    }
+
+    fun sessionComplete() {
+        performIfEnabled(HapticFeedbackType.Success)
+    }
+
+    fun sessionPaused() {
+        performIfEnabled(HapticFeedbackType.LightImpact)
+    }
+
+    fun sessionResumed() {
+        performIfEnabled(HapticFeedbackType.LightImpact)
+    }
+
     private fun performIfEnabled(type: HapticFeedbackType) {
         if (!settingsRepository.hapticsEnabled.value) return
         engine.perform(type)

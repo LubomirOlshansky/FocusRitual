@@ -11,7 +11,11 @@ class LiveActivityActionObserver {
     private static let actionKey = "com.focusritual.liveactivity.action"
     private static let darwinNotificationName = "com.focusritual.liveactivity.action"
 
+    private var isObserving = false
+
     func startObserving() {
+        guard !isObserving else { return }
+
         let center = CFNotificationCenterGetDarwinNotifyCenter()
         CFNotificationCenterAddObserver(
             center,
@@ -25,9 +29,12 @@ class LiveActivityActionObserver {
             nil,
             .deliverImmediately
         )
+        isObserving = true
     }
 
     func stopObserving() {
+        guard isObserving else { return }
+
         let center = CFNotificationCenterGetDarwinNotifyCenter()
         CFNotificationCenterRemoveObserver(
             center,
@@ -35,6 +42,7 @@ class LiveActivityActionObserver {
             CFNotificationName(Self.darwinNotificationName as CFString),
             nil
         )
+        isObserving = false
     }
 
     private func handleNotification() {

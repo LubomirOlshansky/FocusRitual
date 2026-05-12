@@ -34,10 +34,8 @@ class LiveActivityController {
     /** End the Live Activity. */
     fun stop() {
         val handler = LiveActivityBridge.handler ?: return
-        if (currentSessionType != null) {
-            handler.endActivity()
-            currentSessionType = null
-        }
+        handler.endActivity()
+        currentSessionType = null
     }
 
     private fun start(handler: LiveActivityHandler, state: LiveActivityState) {

@@ -43,6 +43,7 @@
     <string name="settings_credits_author">by %1$s</string>
     <string name="settings_legal_privacy">Privacy Policy</string>
     <string name="settings_legal_terms">Terms of Use</string>
+    <string name="settings_legal_open_url">Open URL</string>
     <string name="settings_legal_privacy_subtitle">FocusRitual privacy notes</string>
     <string name="settings_legal_terms_subtitle">Using FocusRitual</string>
     <string name="settings_legal_privacy_storage_title">What FocusRitual stores</string>

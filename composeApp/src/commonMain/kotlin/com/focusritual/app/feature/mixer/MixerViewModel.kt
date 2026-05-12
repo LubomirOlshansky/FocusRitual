@@ -179,6 +179,7 @@ class MixerViewModel(
             createdAt = currentTimeMillis(),
         )
         presetRepo.save(preset)
+        hapticController.mixSaved()
         _loadedPresetId.value = preset.id
         _isDirtyFromPreset.value = false
     }

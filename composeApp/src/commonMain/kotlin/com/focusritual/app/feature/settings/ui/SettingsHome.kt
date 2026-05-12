@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.focusritual.app.core.designsystem.component.VolumeSlider
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.Spacing
+import com.focusritual.app.core.haptic.HapticController
 import com.focusritual.app.feature.settings.SettingsIntent
 import com.focusritual.app.feature.settings.SettingsUiState
 import focusritual.composeapp.generated.resources.Res
@@ -81,7 +82,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun SettingsHome(
     uiState: SettingsUiState,
+    appVersion: String,
     currentLanguageName: String = "",
+    hapticController: HapticController,
     onIntent: (SettingsIntent) -> Unit,
     listState: LazyListState,
 ) {
@@ -97,6 +100,9 @@ internal fun SettingsHome(
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        item(key = "app_identity") {
+            AppIdentityBlock(versionName = appVersion)
+        }
         item {
             SettingsSection {
                 SectionLabel(stringResource(Res.string.settings_section_audio))
@@ -109,6 +115,7 @@ internal fun SettingsHome(
                 AppGroup(
                     uiState = uiState,
                     currentLanguageName = currentLanguageName,
+                    hapticController = hapticController,
                     onIntent = onIntent,
                 )
             }
@@ -181,6 +188,19 @@ private fun AudioGroup(
                     onValueChange = { level -> onIntent(SettingsIntent.SetDuckLevel(level)) },
                 )
             }
+        }
+        AnimatedVisibility(
+            visible = !uiState.mixWithOthersEnabled,
+            enter = fadeIn(tween(durationMillis = 180, easing = FocusRitualEasing.Atmospheric)),
+            exit = fadeOut(tween(durationMillis = 140, easing = FocusRitualEasing.CinematicIn)),
+        ) {
+            Text(
+                text = "Available when “Use while media is playing” is on",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Light,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.42f),
+                modifier = Modifier.padding(start = 56.dp, top = Spacing.xs, end = Spacing.lg, bottom = Spacing.sm),
+            )
         }
     }
 }
@@ -315,6 +335,7 @@ private fun DuckLevelControl(value: Float, onValueChange: (Float) -> Unit) {
 private fun AppGroup(
     uiState: SettingsUiState,
     currentLanguageName: String = "",
+    hapticController: HapticController,
     onIntent: (SettingsIntent) -> Unit,
 ) {
     val systemLabel = if (currentLanguageName.isNotEmpty()) {
@@ -336,6 +357,9 @@ private fun AppGroup(
             showChevron = false,
             trailing = {
                 FocusSwitch(uiState.hapticsEnabled) { enabled ->
+                    if (enabled) {
+                        hapticController.hapticsEnabled()
+                    }
                     onIntent(SettingsIntent.SetHapticsEnabled(enabled))
                 }
             },

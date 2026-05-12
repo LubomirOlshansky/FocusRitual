@@ -35,6 +35,11 @@ class AudioSettingsRepository(private val settings: Settings = Settings()) {
     private val _externalAudioAttenuation = MutableStateFlow(1f)
     val externalAudioAttenuation: StateFlow<Float> = _externalAudioAttenuation.asStateFlow()
 
+    // Counter bumped by platform controllers (e.g. iOS interruption-ended with ShouldResume)
+    // to ask downstream orchestrators to re-issue play commands for currently-enabled sounds.
+    private val _resumeTick = MutableStateFlow(0)
+    val resumeTick: StateFlow<Int> = _resumeTick.asStateFlow()
+
     val playbackSettings: Flow<AudioPlaybackSettings> = combine(
         mixWithOthersEnabled,
         duckOthersEnabled,
@@ -73,6 +78,10 @@ class AudioSettingsRepository(private val settings: Settings = Settings()) {
 
     fun setExternalAudioAttenuation(multiplier: Float) {
         _externalAudioAttenuation.value = multiplier.coerceIn(0f, 1f)
+    }
+
+    fun triggerResumeTick() {
+        _resumeTick.value = _resumeTick.value + 1
     }
 
     companion object {

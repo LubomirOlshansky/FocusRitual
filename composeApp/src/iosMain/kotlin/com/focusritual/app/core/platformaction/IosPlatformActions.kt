@@ -12,9 +12,8 @@ import platform.UIKit.UIViewController
 @OptIn(ExperimentalForeignApi::class)
 class IosPlatformActions : PlatformActions {
     override fun openLanguageSettings() {
-        if (!open(UIApplicationOpenSettingsURLString)) {
-            open("app-settings:")
-        }
+        val settingsUrl = NSURL.URLWithString(UIApplicationOpenSettingsURLString) ?: return
+        UIApplication.sharedApplication.openURL(settingsUrl)
     }
 
     override fun rateApp() {
@@ -88,7 +87,11 @@ class IosPlatformActions : PlatformActions {
         val nsUrl = NSURL.URLWithString(url) ?: return false
         val application = UIApplication.sharedApplication
         if (!application.canOpenURL(nsUrl)) return false
-        application.openURL(nsUrl)
+        application.openURL(
+            nsUrl,
+            options = emptyMap<Any?, Any>(),
+            completionHandler = null,
+        )
         return true
     }
 

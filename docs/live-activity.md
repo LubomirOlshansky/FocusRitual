@@ -92,7 +92,7 @@ FocusRitual's Live Activity shows 3 distinct states on the lock screen and Dynam
 1. Delete the auto-generated template files from the new target
 2. Add all files from `iosApp/FocusRitualWidget/` to the widget target
 3. Add `FocusRitualAttributes.swift` to **both** the main app target and widget target (shared model)
-4. Set the widget extension's deployment target to **iOS 16.2+**
+4. Set the widget extension's deployment target to **iOS 18+**
 
 ### 3. Info.plist
 
@@ -102,11 +102,28 @@ Add to the **main app** `Info.plist`:
 <true/>
 ```
 
-### 4. App Group (optional, for future push updates)
+### 4. App Group
 
-If you later want push-token–based updates:
+The main app and widget extension use an App Group plus Darwin notification to deliver Live Activity button actions to Kotlin while the app process is alive.
+
 1. Add an App Group capability to both the main app and widget extension
-2. Use the same group ID (e.g., `group.com.focusritual.app`)
+2. Use the same group ID: `group.com.focusritual.app`
+
+If you later want push-token based updates, reuse this shared capability for any additional shared state.
+
+## Lifecycle Resilience
+
+ActivityKit Live Activities are system-managed. FocusRitual treats stop/end actions as locally authoritative, but iOS does not guarantee that the app receives cleanup callbacks during a user force-quit or process kill.
+
+Current behavior:
+- Ambient Live Activity starts only when no session exists, the mixer is playing, and at least one sound is active.
+- Pausing or stopping ambient playback falls through to the inactive path and asks ActivityKit to end existing FocusRitual activities.
+- `LiveActivityManager` recovers existing `Activity<FocusRitualAttributes>.activities` instead of relying only on an in-memory activity reference.
+- Starting a new FocusRitual Live Activity first ends existing FocusRitual activities so only one remains.
+- Stop Mix and End Session widget intents end existing FocusRitual activities directly from the widget extension before notifying the main app.
+- The app delegate performs bounded best-effort cleanup from `applicationWillTerminate`.
+
+`staleDate` is only a system freshness hint. It should not be treated as an automatic dismissal guarantee, and force-quit cleanup is best-effort only.
 
 ## Usage from Kotlin
 

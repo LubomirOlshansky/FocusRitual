@@ -22,12 +22,6 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
         totalCycles: Int32,
         fadeOutMinutes: Int32
     ) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-
-        // End any stale activity first
-        endActivity()
-
-        let attributes = FocusRitualAttributes(sessionType: sessionType)
         let contentState = makeContentState(
             isPaused: isPaused,
             mixSummary: mixSummary,
@@ -40,17 +34,27 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
             fadeOutMinutes: Int(fadeOutMinutes)
         )
 
-        do {
-            // staleDate tells iOS to auto-dismiss if the app stops updating
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            endActivity()
+            return
+        }
+
+        Task {
+            await endExistingActivities()
+
+            let attributes = FocusRitualAttributes(sessionType: sessionType)
             let staleDate = Date().addingTimeInterval(Double(max(Int(remainingSeconds), 60)))
             let content = ActivityContent(state: contentState, staleDate: staleDate)
-            currentActivity = try Activity.request(
-                attributes: attributes,
-                content: content,
-                pushType: nil
-            )
-        } catch {
-            print("[FocusRitual] Failed to start Live Activity: \(error)")
+
+            do {
+                currentActivity = try Activity.request(
+                    attributes: attributes,
+                    content: content,
+                    pushType: nil
+                )
+            } catch {
+                print("[FocusRitual] Failed to start Live Activity: \(error)")
+            }
         }
     }
 
@@ -65,7 +69,7 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
         totalCycles: Int32,
         fadeOutMinutes: Int32
     ) {
-        guard let activity = currentActivity else { return }
+        guard let activity = recoverActivity() else { return }
 
         let contentState = makeContentState(
             isPaused: isPaused,
@@ -79,7 +83,6 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
             fadeOutMinutes: Int(fadeOutMinutes)
         )
 
-        // Refresh staleDate on each update — if updates stop (app killed), iOS will dismiss
         let staleDate = Date().addingTimeInterval(60)
         let content = ActivityContent(state: contentState, staleDate: staleDate)
 
@@ -89,18 +92,19 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
     }
 
     func endActivity() {
-        guard let activity = currentActivity else { return }
-        let activityToEnd = activity
+        let activityToEnd = currentActivity
         currentActivity = nil
 
         Task {
-            let finalContent = activity.content
-            await activityToEnd.end(finalContent, dismissalPolicy: .immediate)
+            if let activityToEnd {
+                await activityToEnd.end(nil, dismissalPolicy: .immediate)
+            }
+            await endExistingActivities(excluding: activityToEnd?.id)
         }
     }
 
-    /// Synchronously ends all Live Activities. Safe to call from applicationWillTerminate.
-    static func endAllActivitiesSync() {
+    /// Synchronously ends all Live Activities as a bounded best-effort termination cleanup.
+    static func endAllActivitiesSync(timeout: TimeInterval = 2.0) {
         let semaphore = DispatchSemaphore(value: 0)
         Task.detached {
             for activity in Activity<FocusRitualAttributes>.activities {
@@ -108,10 +112,28 @@ class LiveActivityManager: NSObject, LiveActivityHandler {
             }
             semaphore.signal()
         }
-        semaphore.wait()
+        _ = semaphore.wait(timeout: .now() + .milliseconds(Int(timeout * 1000)))
     }
 
     // MARK: - Private
+
+    private func recoverActivity() -> Activity<FocusRitualAttributes>? {
+        let existingActivities = Activity<FocusRitualAttributes>.activities
+
+        if let currentActivity,
+           existingActivities.contains(where: { $0.id == currentActivity.id }) {
+            return currentActivity
+        }
+
+        currentActivity = existingActivities.first
+        return currentActivity
+    }
+
+    private func endExistingActivities(excluding activityIdToKeep: String? = nil) async {
+        for activity in Activity<FocusRitualAttributes>.activities where activity.id != activityIdToKeep {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+    }
 
     private func makeContentState(
         isPaused: Bool,

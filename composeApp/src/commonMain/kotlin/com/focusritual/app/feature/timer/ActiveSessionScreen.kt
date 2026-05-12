@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.focusritual.app.core.haptic.HapticController
 import com.focusritual.app.feature.session.SessionConfig
 import com.focusritual.app.feature.session.SessionMode
 import kotlinx.coroutines.delay
@@ -76,8 +77,9 @@ fun ActiveSessionScreen(
     onFinish: () -> Unit,
     onSoundControl: (Float?) -> Unit,
     onStartAnother: () -> Unit,
+    hapticController: HapticController = HapticController(),
     viewModel: ActiveSessionViewModel = viewModel(key = "session_$sessionKey") {
-        ActiveSessionViewModel(config)
+        ActiveSessionViewModel(config, hapticController)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

@@ -80,13 +80,13 @@ actual fun LiveActivityEffect(
                 )
             }
 
-            // Ambient playback (no session, mix has active sounds)
-            !isSessionActive && mixerState.activeSoundCount > 0 -> {
+            // Ambient playback (no session, mix is actively playing)
+            !isSessionActive && sessionState == null && mixerState.isPlaying && mixerState.activeSoundCount > 0 -> {
                 controller.push(
                     LiveActivityState.AmbientPlayback(
                         mixSummary = mixerState.activeSoundsSummary,
                         activeSoundCount = mixerState.activeSoundCount,
-                        isPaused = !mixerState.isPlaying,
+                        isPaused = false,
                     ),
                 )
             }

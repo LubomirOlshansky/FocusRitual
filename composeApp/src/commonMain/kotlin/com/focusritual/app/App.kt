@@ -71,7 +71,12 @@ fun App() {
         // Track session ViewModel at this level for Live Activity
         val activeScreen = currentScreen as? AppScreen.ActiveSession
         val sessionViewModel: ActiveSessionViewModel? = activeScreen?.let {
-            viewModel(key = "session_${it.sessionId}") { ActiveSessionViewModel(it.config) }
+            viewModel(key = "session_${it.sessionId}") {
+                ActiveSessionViewModel(
+                    config = it.config,
+                    hapticController = hapticController,
+                )
+            }
         }
         val sessionState = sessionViewModel?.uiState?.collectAsStateWithLifecycle()
 
@@ -187,6 +192,7 @@ fun App() {
                     is AppScreen.ActiveSession -> ActiveSessionScreen(
                         config = screen.config,
                         sessionKey = screen.sessionId,
+                        hapticController = hapticController,
                         onFinish = {
                             if (currentScreen is AppScreen.ActiveSession) {
                                 sessionKey++
@@ -208,6 +214,7 @@ fun App() {
             SettingsModal(
                 isVisible = showSettings,
                 onDismiss = { showSettings = false },
+                hapticController = hapticController,
                 viewModel = settingsViewModel,
             )
         }

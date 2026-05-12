@@ -1,7 +1,12 @@
 package com.focusritual.app.feature.settings.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,17 +38,22 @@ import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material.icons.filled.Water
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.Spacing
 import com.focusritual.app.feature.settings.SettingsDetail
 import com.focusritual.app.feature.settings.domain.SoundCredit
@@ -52,6 +62,7 @@ import focusritual.composeapp.generated.resources.Res
 import focusritual.composeapp.generated.resources.back
 import focusritual.composeapp.generated.resources.settings_credits_author
 import focusritual.composeapp.generated.resources.settings_credits_subtitle
+import focusritual.composeapp.generated.resources.settings_legal_open_url
 import focusritual.composeapp.generated.resources.settings_legal_privacy
 import focusritual.composeapp.generated.resources.settings_legal_privacy_activity_body
 import focusritual.composeapp.generated.resources.settings_legal_privacy_activity_title
@@ -79,11 +90,15 @@ import focusritual.composeapp.generated.resources.settings_legal_terms_advice_ti
 import focusritual.composeapp.generated.resources.settings_support_sound_credits
 import org.jetbrains.compose.resources.stringResource
 
+private const val PrivacyPolicyUrl = "https://focusritual.app/privacy"
+private const val TermsOfUseUrl = "https://focusritual.app/terms"
+
 @Composable
 internal fun SettingsDetailContent(
     detail: SettingsDetail,
     listState: LazyListState,
     onBack: () -> Unit,
+    onOpenUrl: (String) -> Unit,
 ) {
     when (detail) {
         SettingsDetail.SoundCredits -> SoundCreditsDetail(
@@ -94,15 +109,19 @@ internal fun SettingsDetailContent(
             title = stringResource(Res.string.settings_legal_privacy),
             subtitle = stringResource(Res.string.settings_legal_privacy_subtitle),
             sections = privacyPolicySections(),
+            url = PrivacyPolicyUrl,
             listState = listState,
             onBack = onBack,
+            onOpenUrl = onOpenUrl,
         )
         SettingsDetail.TermsOfUse -> LegalTextDetail(
             title = stringResource(Res.string.settings_legal_terms),
             subtitle = stringResource(Res.string.settings_legal_terms_subtitle),
             sections = termsOfUseSections(),
+            url = TermsOfUseUrl,
             listState = listState,
             onBack = onBack,
+            onOpenUrl = onOpenUrl,
         )
     }
 }
@@ -122,7 +141,9 @@ private fun SoundCreditsDetail(
         val credits = soundCredits()
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 top = 0.dp,
@@ -141,23 +162,33 @@ private fun LegalTextDetail(
     title: String,
     subtitle: String,
     sections: List<LegalSection>,
+    url: String,
     listState: LazyListState,
     onBack: () -> Unit,
+    onOpenUrl: (String) -> Unit,
 ) {
     val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
     Column(modifier = Modifier.fillMaxSize()) {
         DetailHeader(title = title, subtitle = subtitle, onBack = onBack)
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
-                top = 0.dp,
+                top = 12.dp,
                 end = 20.dp,
                 bottom = 20.dp + bottomInset,
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item(key = "open_url") {
+                LegalOpenUrlButton(
+                    label = stringResource(Res.string.settings_legal_open_url),
+                    onClick = { onOpenUrl(url) },
+                )
+            }
             items(sections, key = { it.title }) { section ->
                 LegalSectionCard(section)
             }
@@ -167,29 +198,67 @@ private fun LegalTextDetail(
 
 @Composable
 private fun DetailHeader(title: String, subtitle: String, onBack: () -> Unit) {
-    Row(
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = Spacing.md, top = Spacing.sm, end = 20.dp, bottom = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GhostIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back), onBack)
+            Spacer(Modifier.width(Spacing.sm))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Light,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f),
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Light,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.44f),
+                )
+            }
+        }
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f),
+            thickness = 0.5.dp,
+        )
+    }
+}
+
+@Composable
+private fun LegalOpenUrlButton(label: String, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(durationMillis = 150, easing = FocusRitualEasing.DeepEaseOut),
+    )
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = Spacing.md, top = Spacing.sm, end = 20.dp, bottom = Spacing.md),
-        verticalAlignment = Alignment.CenterVertically,
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+            .border(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+                shape = RoundedCornerShape(22.dp),
+            )
+            .clickable(interactionSource = interactionSource, indication = null) { onClick() }
+            .padding(top = 13.dp, bottom = 13.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        GhostIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back), onBack)
-        Spacer(Modifier.width(Spacing.sm))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f),
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Light,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.44f),
-            )
-        }
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Light,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
+        )
     }
 }
 
@@ -210,7 +279,7 @@ private fun LegalSectionCard(section: LegalSection) {
         Text(
             section.title,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Normal,
+            fontWeight = FontWeight.Light,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
         )
         Spacer(Modifier.height(Spacing.sm))
@@ -259,7 +328,7 @@ private fun SoundCreditCard(credit: SoundCredit) {
             Text(
                 credit.name,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.Light,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
             )
             Spacer(Modifier.height(Spacing.xs))
