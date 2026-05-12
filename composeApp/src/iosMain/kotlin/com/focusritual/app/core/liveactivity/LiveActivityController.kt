@@ -49,6 +49,9 @@ class LiveActivityController {
             isPaused = state.isPaused,
             mixSummary = state.mixSummary,
             activeSoundCount = (state as? LiveActivityState.AmbientPlayback)?.activeSoundCount ?: 0,
+            activeSoundNames = (state as? LiveActivityState.AmbientPlayback)?.activeSoundNames ?: emptyList(),
+            savedMixName = (state as? LiveActivityState.AmbientPlayback)?.savedMixName,
+            isDirty = (state as? LiveActivityState.AmbientPlayback)?.isDirty ?: false,
             remainingSeconds = when (state) {
                 is LiveActivityState.FocusActive -> state.remainingSeconds
                 is LiveActivityState.SleepActive -> state.remainingSeconds
@@ -71,6 +74,9 @@ class LiveActivityController {
             isPaused = state.isPaused,
             mixSummary = state.mixSummary,
             activeSoundCount = (state as? LiveActivityState.AmbientPlayback)?.activeSoundCount ?: 0,
+            activeSoundNames = (state as? LiveActivityState.AmbientPlayback)?.activeSoundNames ?: emptyList(),
+            savedMixName = (state as? LiveActivityState.AmbientPlayback)?.savedMixName,
+            isDirty = (state as? LiveActivityState.AmbientPlayback)?.isDirty ?: false,
             remainingSeconds = when (state) {
                 is LiveActivityState.FocusActive -> state.remainingSeconds
                 is LiveActivityState.SleepActive -> state.remainingSeconds

@@ -99,6 +99,7 @@ class MixerViewModel(
                 selectedCategory = category,
                 activeSoundsSummary = summary.activeSoundsSummary,
                 activeSoundCount = summary.activeSoundCount,
+                activeSoundNames = withLive.filter { it.isEnabled }.map { it.name },
                 savedMixes = savedMixes,
                 loadedPresetId = loadedPresetId,
                 isDirtyFromPreset = isDirtyFromPreset,

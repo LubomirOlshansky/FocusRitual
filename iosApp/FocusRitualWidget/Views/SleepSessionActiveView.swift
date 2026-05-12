@@ -66,21 +66,6 @@ struct SleepSessionActiveView: View {
                     .foregroundStyle(Color.white.opacity(0.17))
             }
             .padding(.leading, 13)
-
-            Spacer(minLength: 8)
-
-            // Action buttons
-            VStack(spacing: 8) {
-                LiveActivityButton(
-                    systemImage: state.isPaused ? "play.fill" : "pause.fill",
-                    intent: TogglePauseIntent()
-                )
-                LiveActivityButton(
-                    systemImage: "xmark",
-                    style: .secondary,
-                    intent: EndSessionIntent()
-                )
-            }
         }
         .padding(.horizontal, 15)
         .padding(.vertical, 13)

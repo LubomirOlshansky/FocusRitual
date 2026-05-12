@@ -10,6 +10,7 @@ data class MixerUiState(
     val selectedCategory: SoundCategory = SoundCategory.ALL,
     val activeSoundsSummary: String = "",
     val activeSoundCount: Int = 0,
+    val activeSoundNames: List<String> = emptyList(),
     val savedMixes: List<MixPreset> = emptyList(),
     val loadedPresetId: String? = null,
     val isDirtyFromPreset: Boolean = false,

@@ -47,7 +47,17 @@ actual fun LiveActivityEffect(
         }
     }
 
-    LaunchedEffect(isSessionActive, sessionState, mixerState.isPlaying, mixerState.activeSoundsSummary, mixerState.activeSoundCount) {
+    LaunchedEffect(
+        isSessionActive,
+        sessionState,
+        mixerState.isPlaying,
+        mixerState.activeSoundsSummary,
+        mixerState.activeSoundCount,
+        mixerState.activeSoundNames,
+        mixerState.loadedPresetId,
+        mixerState.isDirtyFromPreset,
+        mixerState.savedMixes,
+    ) {
         when {
             // Focus session active
             isSessionActive && sessionState != null && !sessionState.isSleepMode -> {
@@ -82,10 +92,16 @@ actual fun LiveActivityEffect(
 
             // Ambient playback (no session, mix is actively playing)
             !isSessionActive && sessionState == null && mixerState.isPlaying && mixerState.activeSoundCount > 0 -> {
+                val savedName = mixerState.loadedPresetId?.let { id ->
+                    mixerState.savedMixes.firstOrNull { it.id == id }?.name
+                }
                 controller.push(
                     LiveActivityState.AmbientPlayback(
                         mixSummary = mixerState.activeSoundsSummary,
                         activeSoundCount = mixerState.activeSoundCount,
+                        activeSoundNames = mixerState.activeSoundNames,
+                        savedMixName = savedName,
+                        isDirty = mixerState.isDirtyFromPreset,
                         isPaused = false,
                     ),
                 )

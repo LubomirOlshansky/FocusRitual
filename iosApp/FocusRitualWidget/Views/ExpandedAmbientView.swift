@@ -1,52 +1,85 @@
 import SwiftUI
 import WidgetKit
 
-/// Waveform bars for the expanded DI `.leading` region.
-struct ExpandedAmbientLeading: View {
+// MARK: - Orb
+
+struct OrbView: View {
+    var isBreathing: Bool
+    private let primary = Color(red: 0.72, green: 0.78, blue: 0.86)
     var body: some View {
-        WaveformBars()
-            .padding(.leading, 4)
+        ZStack {
+            Circle().strokeBorder(primary.opacity(0.07), lineWidth: 0.5)
+                .frame(width: 62, height: 62)
+                .scaleEffect(isBreathing ? 1.06 : 1.0)
+                .opacity(isBreathing ? 0.65 : 0.28)
+                .animation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true), value: isBreathing)
+            Circle().strokeBorder(primary.opacity(0.07), lineWidth: 0.5)
+                .frame(width: 55, height: 55)
+                .scaleEffect(isBreathing ? 1.06 : 1.0)
+                .opacity(isBreathing ? 0.65 : 0.28)
+                .animation(.easeInOut(duration: 4.5).delay(0.8).repeatForever(autoreverses: true), value: isBreathing)
+            Circle().fill(RadialGradient(colors: [
+                Color(red: 0.23, green: 0.31, blue: 0.41).opacity(0.85),
+                Color(red: 0.07, green: 0.10, blue: 0.15).opacity(0.95)
+            ], center: UnitPoint(x: 0.35, y: 0.30), startRadius: 0, endRadius: 24))
+                .frame(width: 48, height: 48)
+                .overlay(Circle().strokeBorder(primary.opacity(0.16), lineWidth: 0.5))
+            ZStack {
+                Circle().strokeBorder(primary.opacity(0.35), lineWidth: 0.7).frame(width: 9, height: 9)
+                Circle().fill(primary.opacity(0.18)).frame(width: 4, height: 4)
+            }
+        }.frame(width: 48, height: 48)
     }
 }
 
-/// Text content for the expanded DI `.center` region.
+// MARK: - Text Stack
+
+struct TextStack: View {
+    let name: String
+    let subtitle: String
+    private let primary = Color(red: 0.72, green: 0.78, blue: 0.86)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("NOW PLAYING").font(.system(size: 9, weight: .light)).kerning(1.0)
+                .foregroundColor(primary.opacity(0.35))
+            Text(name).font(.system(size: 17, weight: .light)).tracking(-0.4)
+                .foregroundColor(.white.opacity(0.88)).lineLimit(1).truncationMode(.tail)
+            Text(subtitle).font(.system(size: 11, weight: .light))
+                .foregroundColor(.white.opacity(0.30)).lineLimit(1).truncationMode(.tail)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Live Dot
+
+struct LiveDot: View {
+    var isPulsing: Bool
+    private let primary = Color(red: 0.72, green: 0.78, blue: 0.86)
+    var body: some View {
+        Circle().fill(primary.opacity(isPulsing ? 0.90 : 0.35))
+            .frame(width: 6, height: 6)
+            .scaleEffect(isPulsing ? 1.25 : 1.0)
+            .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: isPulsing)
+    }
+}
+
+// MARK: - Expanded Dynamic Island Center (Ambient)
+
 struct ExpandedAmbientCenter: View {
     let state: FocusRitualAttributes.ContentState
+    @State private var isBreathing = false
+    @State private var isLivePulsing = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("CURRENT MIX")
-                .font(.system(size: 10, weight: .regular))
-                .tracking(1.0)
-                .foregroundStyle(Color.white.opacity(0.32))
-
-            Text(state.mixSummary)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(Color.white.opacity(0.85))
-                .lineLimit(1)
-
-            Text("\(state.activeSoundCount) \(state.activeSoundCount == 1 ? "sound" : "sounds") playing")
-                .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(Color.white.opacity(0.30))
+        HStack(spacing: 12) {
+            OrbView(isBreathing: isBreathing)
+            TextStack(name: state.displayName, subtitle: state.displaySubtitle)
+            LiveDot(isPulsing: isLivePulsing)
         }
-    }
-}
-
-// MARK: - Waveform Bars
-
-struct WaveformBars: View {
-    private let heights: [CGFloat] = [0.35, 0.75, 0.45, 0.9, 0.3, 0.7, 0.5]
-    private let maxHeight: CGFloat = 28
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 3) {
-            ForEach(0..<heights.count, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.white.opacity(0.35))
-                    .frame(width: 3.5, height: heights[i] * maxHeight)
-            }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            isBreathing = true
+            isLivePulsing = true
         }
-        .frame(height: maxHeight)
-        .contentTransition(.interpolate)
     }
 }

@@ -18,9 +18,7 @@ struct FocusRitualLiveActivity: Widget {
             DynamicIsland {
                 // MARK: - Expanded Dynamic Island
                 DynamicIslandExpandedRegion(.leading) {
-                    if context.attributes.sessionType == "ambient" {
-                        ExpandedAmbientLeading()
-                    }
+                    EmptyView()
                 }
                 DynamicIslandExpandedRegion(.trailing) { EmptyView() }
                 DynamicIslandExpandedRegion(.center) {
@@ -130,10 +128,10 @@ struct FocusRitualLiveActivity: Widget {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(RitualTokens.onSurfaceVariant.opacity(0.5))
         default:
-            // Ambient: pause indicator
-            Image(systemName: state.isPaused ? "play.fill" : "pause.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(RitualTokens.onSurfaceVariant.opacity(0.5))
+            // Ambient: static live dot indicator
+            Circle()
+                .fill(Color(red: 0.72, green: 0.78, blue: 0.86).opacity(0.6))
+                .frame(width: 6, height: 6)
         }
     }
 

@@ -19,7 +19,9 @@ struct FocusRitualAttributes: ActivityAttributes {
         let mixSummary: String
 
         // Ambient-only
-        let activeSoundCount: Int
+        let activeSounds: [String]
+        let savedMixName: String?
+        let isDirty: Bool
 
         // Focus + Sleep
         let remainingSeconds: Int
@@ -60,6 +62,25 @@ struct FocusRitualAttributes: ActivityAttributes {
         var fadeOutLabel: String {
             "Fade out in \(fadeOutMinutes) min"
         }
+
+        // MARK: Ambient display logic
+
+        var displayName: String {
+            guard !activeSounds.isEmpty else { return "FocusRitual" }
+            if let name = savedMixName, !isDirty { return name }
+            if activeSounds.count <= 2 { return activeSounds.joined(separator: " · ") }
+            return "Custom mix"
+        }
+
+        var displaySubtitle: String {
+            guard !activeSounds.isEmpty else { return "No sounds active" }
+            if savedMixName != nil, !isDirty { return activeSounds.joined(separator: " · ") }
+            if activeSounds.count <= 2 {
+                let count = activeSounds.count
+                return "\(count) sound\(count == 1 ? "" : "s") active"
+            }
+            return activeSounds.joined(separator: " · ")
+        }
     }
 }
 
@@ -70,12 +91,16 @@ extension FocusRitualAttributes.ContentState {
     static func ambient(
         isPaused: Bool,
         mixSummary: String,
-        activeSoundCount: Int
+        activeSounds: [String],
+        savedMixName: String?,
+        isDirty: Bool
     ) -> Self {
         .init(
             isPaused: isPaused,
             mixSummary: mixSummary,
-            activeSoundCount: activeSoundCount,
+            activeSounds: activeSounds,
+            savedMixName: savedMixName,
+            isDirty: isDirty,
             remainingSeconds: 0,
             totalSeconds: 0,
             phase: "",
@@ -99,7 +124,9 @@ extension FocusRitualAttributes.ContentState {
         .init(
             isPaused: isPaused,
             mixSummary: mixSummary,
-            activeSoundCount: 0,
+            activeSounds: [],
+            savedMixName: nil,
+            isDirty: false,
             remainingSeconds: remainingSeconds,
             totalSeconds: totalSeconds,
             phase: phase,
@@ -121,7 +148,9 @@ extension FocusRitualAttributes.ContentState {
         .init(
             isPaused: isPaused,
             mixSummary: mixSummary,
-            activeSoundCount: 0,
+            activeSounds: [],
+            savedMixName: nil,
+            isDirty: false,
             remainingSeconds: remainingSeconds,
             totalSeconds: totalSeconds,
             phase: "",

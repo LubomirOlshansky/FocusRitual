@@ -23,8 +23,10 @@ private struct CardPreview<Content: View>: View {
         AmbientPlaybackView(
             state: .ambient(
                 isPaused: false,
-                mixSummary: "Rain • Wind",
-                activeSoundCount: 3
+                mixSummary: "Rain · Wind",
+                activeSounds: ["Rain", "Wind", "Forest"],
+                savedMixName: nil,
+                isDirty: false
             )
         )
     }
@@ -36,8 +38,10 @@ private struct CardPreview<Content: View>: View {
         AmbientPlaybackView(
             state: .ambient(
                 isPaused: true,
-                mixSummary: "Rain • Wind",
-                activeSoundCount: 3
+                mixSummary: "Rain · Wind",
+                activeSounds: ["Rain", "Wind", "Forest"],
+                savedMixName: "Evening Calm",
+                isDirty: false
             )
         )
     }
@@ -138,12 +142,13 @@ private struct CardPreview<Content: View>: View {
 
 #Preview("Expanded — Ambient") {
     HStack(spacing: 14) {
-        ExpandedAmbientLeading()
         ExpandedAmbientCenter(
             state: .ambient(
                 isPaused: false,
                 mixSummary: "Rain · Wind · Forest",
-                activeSoundCount: 3
+                activeSounds: ["Rain", "Wind", "Forest"],
+                savedMixName: nil,
+                isDirty: false
             )
         )
         Spacer()

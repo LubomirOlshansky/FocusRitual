@@ -17,6 +17,9 @@ sealed interface LiveActivityState {
     data class AmbientPlayback(
         override val mixSummary: String,
         val activeSoundCount: Int,
+        val activeSoundNames: List<String>,
+        val savedMixName: String?,
+        val isDirty: Boolean,
         override val isPaused: Boolean,
     ) : LiveActivityState
 

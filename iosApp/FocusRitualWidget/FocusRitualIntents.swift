@@ -40,7 +40,9 @@ private func updateLiveActivityPauseState() async {
     let updated = FocusRitualAttributes.ContentState(
         isPaused: newIsPaused,
         mixSummary: current.mixSummary,
-        activeSoundCount: current.activeSoundCount,
+        activeSounds: current.activeSounds,
+        savedMixName: current.savedMixName,
+        isDirty: current.isDirty,
         remainingSeconds: current.remainingSeconds,
         totalSeconds: current.totalSeconds,
         phase: current.phase,
