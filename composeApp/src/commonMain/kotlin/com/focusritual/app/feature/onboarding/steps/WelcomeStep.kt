@@ -28,6 +28,7 @@ import com.focusritual.app.core.designsystem.softBlur
 import com.focusritual.app.feature.onboarding.components.AnimatedFadeIn
 import com.focusritual.app.feature.onboarding.components.AnimatedFadeUp
 import com.focusritual.app.feature.onboarding.components.AtmosphericBackdrop
+import com.focusritual.app.feature.onboarding.components.DistantLight
 import com.focusritual.app.feature.onboarding.components.PulsingTapHint
 import focusritual.composeapp.generated.resources.Res
 import focusritual.composeapp.generated.resources.onboarding_tap_to_continue
@@ -86,6 +87,15 @@ fun WelcomeStep(onAdvance: () -> Unit) {
                     letterSpacing = 0.32.em,
                     textAlign = TextAlign.Center,
                 )
+            }
+        }
+
+        Box(
+            modifier = Modifier.align(Alignment.Center),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedFadeIn(delayMs = 2400, durationMs = 4000) {
+                DistantLight()
             }
         }
 

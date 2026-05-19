@@ -24,14 +24,15 @@ feature/onboarding/
     VignetteOverlay.kt           — Canvas radial vignette (Color.Black allowed here only)
     FilmGrainOverlay.kt          — vertical gradient tiled with BlendMode.Overlay
     BreathingOrb.kt              — 3 concentric rings (1x / 0.78x / 0.50x) + halo
+    DistantLight.kt              — tiny pinpoint of light used on Welcome screen (7200ms breath)
     PillButton.kt                — PulsingTapHint (no ShimmerPillButton — replaced by BreathingPillButton)
     BreathingPillButton.kt       — breathing primary-halo ENTER button (4800ms synced to orb)
     AnimatedFadeIn.kt            — fade-only entrance helper
     AnimatedFadeUp.kt            — fade + 12dp lift entrance helper
   steps/
-    WelcomeStep.kt               — screen 1: upper-third Column, wordmark, hairline, body
-    StepInsideStep.kt            — screen 2: orb as tap target + orb-morph exit animation
-    PillarsStep.kt               — screen 3: entry glow, 4 pillar cards, BreathingPillButton
+    WelcomeStep.kt               — screen 1: two-anchored-column layout + DistantLight at true center
+    StepInsideStep.kt            — screen 2: orb at true center + orb-morph exit animation
+    PillarsStep.kt               — screen 3: entry glow, cards in upper third, ENTER in lower third
 ```
 
 ---
@@ -162,15 +163,17 @@ AnimatedContent(
 | 1 | Hairline accent (FadeIn) | 600 | 2400 | FastOutSlowIn |
 | 1 | Tagline (FadeIn) | 800 | 3000 | FastOutSlowIn |
 | 1 | Body copy + scrim (FadeIn) | 1400 | 3000 | FastOutSlowIn |
+| 1 | **DistantLight (FadeIn)** | **2400** | **4000** | FastOutSlowIn |
+| 1 | DistantLight breath | — | 7200 loop | OrganicEasing Reverse |
 | 1 | TAP TO CONTINUE (pulse) | — | 2800 loop | FastOutSlowIn |
 | 2 | "Step inside." (FadeIn) | 200 | 1800 | FastOutSlowIn |
 | 2 | "Breathe with the light." (FadeIn) | 800 | 2400 | FastOutSlowIn |
 | 2 | TAP THE LIGHT label (pulse) | — | 7200 loop | FastOutSlowIn |
 | 2 | Outer pulse ring (infinite) | — | 4800 loop Restart | FastOutSlowIn |
-| 2→3 | Orb expand on tap | 0 | 1800 | OrganicEasing |
-| 2→3 | Content alpha fade-out | 0 | 700 | — |
+| 2→3 | Orb expand on tap | 0 | **1500** | OrganicEasing |
+| 2→3 | Content alpha fade-out | 0 | **500** | — |
 | 2→3 | First haptic (onboardingAdvance) | 0 | — | — |
-| 2→3 | Second haptic + onAdvance() fires | 1200 | — | — |
+| 2→3 | Second haptic + onAdvance() fires | **900** | — | — |
 | 2→3 | Screen transition | 0 | 900 | fade only |
 | 3 | Entry glow dissipate | 0 | 2200 | OrganicEasing |
 | 3 | Headline (FadeIn) | 200 | 1800 | FastOutSlowIn |
@@ -179,6 +182,7 @@ AnimatedContent(
 | 3 | Card 3 FOCUS | 1000 | 800 | FastOutSlowIn |
 | 3 | Card 4 REST | 1300 | 800 | FastOutSlowIn |
 | 3 | ENTER button (fadeIn) | 1700 | 1200 | — |
+| 3 | ENTER halo breath | — | 4800 loop | FastOutSlowIn Reverse |
 | 3 | ENTER outer pulse ring (infinite) | — | 4800 loop Restart | FastOutSlowIn |
 
 ---
@@ -187,7 +191,7 @@ AnimatedContent(
 
 Tap anywhere on screen → `AdvanceStep`. No step indicator.
 
-Two anchored Columns inside the full-screen tap Box:
+The **light motif begins here**: a small DistantLight at true screen center fades in after the text has settled (2400ms delay), establishing a distant focal point in the forest.
 
 ```
 Box (fillMaxSize, clickable anywhere)
@@ -199,6 +203,10 @@ Box (fillMaxSize, clickable anywhere)
 │   ├── AnimatedFadeIn(600ms, 2400ms) →  Box 28×0.5dp  onSurface@0.20  (hairline)
 │   ├── Spacer 14dp
 │   └── AnimatedFadeIn(800ms, 3000ms) →  "A QUIET SPACE"  11sp W300  ls 0.32em  alpha 0.42
+│
+├── Box (Alignment.Center)   ← NO vertical offset — true screen center
+│   └── AnimatedFadeIn(2400ms, 4000ms)
+│       └── DistantLight()   96dp halo + 6dp core, 7200ms OrganicEasing breath
 │
 └── Column (Alignment.BottomCenter, padding bottom 56dp, CenterHorizontally)
     └── AnimatedFadeIn(1400ms, 3000ms)
@@ -220,26 +228,28 @@ Box (fillMaxSize, clickable anywhere)
 ### Exit animation (orb-morph)
 
 On orb tap → sets `isExiting = true`:
-- `orbSize` 240dp → **1100dp**, tween(**1800**) **OrganicEasing**
-- `orbIntensity` 1f → **3.5f**, tween(**1800**) **OrganicEasing**
-- `contentAlpha` 1f → 0f, tween(**700**)
+- `orbSize` 240dp → **1100dp**, tween(**1500**) **OrganicEasing**
+- `orbIntensity` 1f → **3.5f**, tween(**1500**) **OrganicEasing**
+- `contentAlpha` 1f → 0f, tween(**500**)
 - Immediate: `hapticController.onboardingAdvance()` (first)
-- After **1200ms** delay: `hapticController.onboardingAdvance()` (second) → `onAdvance()` fires
+- After **900ms** delay: `hapticController.onboardingAdvance()` (second) → `onAdvance()` fires
 
-`val orbOffsetY = 60.dp` is the **single source** used by both the outer pulse ring center and the orb `offset(y = orbOffsetY)` — keeping them locked together.
+**Cross-fade overlap:** `onAdvance()` fires at 900ms while the orb is still expanding (1500ms total). The screen cross-fade (900ms) starts during the orb bloom — the user perceives one continuous brightening into Pillars.
+
+**True-center orb:** No `orbOffsetY`. Orb sits at the exact same `Alignment.Center` as the Welcome screen's `DistantLight`. The 1→2 cross-fade reads as one light growing in place.
 
 ```
 Box (fillMaxSize)
 ├── AtmosphericBackdrop(showForest=false, particleCount=15, glowIntensity=0.85f)
 ├── Canvas (fillMaxSize)   ← outer pulse ring (drawn behind orb)
 │   pulseScale 1→2.4, pulseAlpha 0.25→0, 4800ms Restart FastOutSlowIn
-│   center = (width/2, height/2 + orbOffsetY), radius = 120.dp × pulseScale
-│   stroke 0.5dp  onSurface@(pulseAlpha × contentAlpha)
-├── Column (padding top 130dp, .alpha(contentAlpha), CenterHorizontally)
+│   center = (width/2, height/2)   ← true center, NO orbOffsetY
+│   radius = 120.dp × pulseScale,  stroke 0.5dp  onSurface@(pulseAlpha × contentAlpha)
+├── Column (padding top 110dp, .alpha(contentAlpha), CenterHorizontally)
 │   ├── AnimatedFadeIn(200ms, 1800ms) → "Step inside."  30sp W300  alpha 0.88
 │   ├── Spacer 16dp
 │   └── AnimatedFadeIn(800ms, 2400ms) → "Breathe with the light."  13sp lh 21sp W300  alpha 0.48
-├── Box (size 320dp, Alignment.Center, offset y = orbOffsetY, clickable → orb-morph + advance)
+├── Box (size 320dp, Alignment.Center — NO offset, clickable → orb-morph + advance)
 │   └── BreathingOrb(size = orbSize, intensity = orbIntensity)
 └── "TAP THE LIGHT"  10sp W300  ls 0.28em  alpha = labelAlpha×contentAlpha
     labelAlpha: 0.20→0.55 over 7200ms FastOutSlowIn (synced to outer ring breath)
@@ -260,19 +270,23 @@ Canvas draws a radial gradient at center:
 - Stops: `primary@(0.35×glow)` → `primary@(0.08×glow)` → `Transparent`
 - Radius: `minDimension × 0.7 × (1.2 + (1−glow) × 0.6)` — expands slightly as it fades
 
+**Darker, more intimate.** `glowIntensity` drops to 0.45 (was 0.6). Cards anchor to the upper third. ENTER dominates the lower third — the light motif's final form.
+
 ```
 Box (fillMaxSize)
-├── AtmosphericBackdrop(showForest=true, particleCount=3, glowIntensity=0.6f)
-├── Canvas (entry glow — 1400ms dissipation)
+├── AtmosphericBackdrop(showForest=true, particleCount=3, glowIntensity=0.45f)
+├── Canvas (entry glow — 2200ms OrganicEasing dissipation)
 ├── Column (padding top 88dp, CenterHorizontally)
 │   └── AnimatedFadeIn(200ms, 1800ms) → "Your space.\nYour rhythm."
 │                                        22sp lh 30sp W300  alpha 0.90
-├── Column (Alignment.Center, offset y −20dp, padding h 24dp, spacedBy 10dp)
-│   ├── PillarCard("ATMOSPHERE", "Build your space",    GraphicEq,       400ms)
-│   ├── PillarCard("RITUAL",     "Your daily practice", SelfImprovement, 700ms)
-│   ├── PillarCard("FOCUS",      "Deep work, undisturbed", Schedule,     1000ms)
-│   └── PillarCard("REST",       "Drift into silence",  Bedtime,         1300ms)
-└── AnimatedVisibility(enterVisible @ 1700ms, fadeIn 1200ms)  aligned BottomCenter  pb 60dp
+├── Box (Alignment.TopCenter, padding top 160dp, padding h 16dp)
+│   ├── SCRIM  matchParentSize  radialGradient(surface@0.55 → Transparent)
+│   └── Column (fillMaxWidth, padding h 8dp, spacedBy 8dp)
+│       ├── PillarCard("ATMOSPHERE", "Build your space",       GraphicEq,       400ms)
+│       ├── PillarCard("RITUAL",     "Your daily practice",    SelfImprovement, 700ms)
+│       ├── PillarCard("FOCUS",      "Deep work, undisturbed", Schedule,        1000ms)
+│       └── PillarCard("REST",       "Drift into silence",     Bedtime,         1300ms)
+└── AnimatedVisibility(enterVisible @ 1700ms, fadeIn 1200ms)  aligned BottomCenter  pb 80dp
     └── BreathingPillButton("ENTER", onClick = onComplete)
 ```
 
@@ -349,6 +363,16 @@ Layout (Box, Alignment.Center — layers bottom → top):
 
 - Press: `pointerInput + detectTapGestures`, pressScale 1f→0.97f over 120ms. No ripple.
 - Text: label **13sp** W300 ls 0.22em `onSurface@0.95`, padding h **52dp** v **16dp**
+
+### DistantLight
+Used only on the Welcome screen. A small pinpoint of atmospheric light that establishes the **light motif** — the same element that grows into the full orb on screen 2 and is internalized as the ENTER halo on screen 3.
+
+| Layer | Size | Description |
+|-------|------|-------------|
+| Halo | 96dp | `softBlur(24dp)`, radial gradient `primary@(0.14×intensity)` → `primary@(0.05×intensity)` → transparent |
+| Core | 6dp | `CircleShape`, `onSurface@(0.55×intensity)` |
+
+Both layers animate on the same infinite transition: `scale` 0.94→1.08 and `intensity` 0.82→1.0, both 7200ms `OrganicEasing` Reverse — matching the BreathingOrb outer ring's period exactly.
 
 ### AnimatedFadeIn / AnimatedFadeUp
 `LaunchedEffect(Unit)` delays then sets `visible = true`. FadeUp adds 12dp Y translate. Both use FastOutSlowInEasing.

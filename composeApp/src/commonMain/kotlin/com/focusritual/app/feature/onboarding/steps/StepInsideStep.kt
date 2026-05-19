@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -62,15 +61,15 @@ fun StepInsideStep(
 
     val orbSize by animateDpAsState(
         targetValue = if (isExiting) 1100.dp else 240.dp,
-        animationSpec = tween(1800, easing = OrganicEasing),
+        animationSpec = tween(1500, easing = OrganicEasing),
     )
     val orbIntensity by animateFloatAsState(
         targetValue = if (isExiting) 3.5f else 1f,
-        animationSpec = tween(1800, easing = OrganicEasing),
+        animationSpec = tween(1500, easing = OrganicEasing),
     )
     val contentAlpha by animateFloatAsState(
         targetValue = if (isExiting) 0f else 1f,
-        animationSpec = tween(700),
+        animationSpec = tween(500),
     )
 
     val breathTransition = rememberInfiniteTransition()
@@ -101,7 +100,6 @@ fun StepInsideStep(
         ),
     )
 
-    val orbOffsetY = 60.dp
     val pulseColor = MaterialTheme.colorScheme.onSurface
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -110,7 +108,7 @@ fun StepInsideStep(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 130.dp)
+                .padding(top = 110.dp)
                 .alpha(contentAlpha),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -140,7 +138,7 @@ fun StepInsideStep(
             drawCircle(
                 color = pulseColor.copy(alpha = pulseAlpha * contentAlpha),
                 radius = 120.dp.toPx() * pulseScale,
-                center = Offset(size.width / 2, size.height / 2 + orbOffsetY.toPx()),
+                center = Offset(size.width / 2, size.height / 2),
                 style = Stroke(width = 0.5.dp.toPx()),
             )
         }
@@ -149,7 +147,6 @@ fun StepInsideStep(
             modifier = Modifier
                 .size(320.dp)
                 .align(Alignment.Center)
-                .offset(y = orbOffsetY)
                 .clickable(
                     indication = null,
                     interactionSource = orbTapInteractionSource,
@@ -158,7 +155,7 @@ fun StepInsideStep(
                         hapticController.onboardingAdvance()
                         isExiting = true
                         scope.launch {
-                            delay(1200)
+                            delay(900)
                             hapticController.onboardingAdvance()
                             onAdvance()
                         }

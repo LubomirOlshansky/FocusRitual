@@ -77,6 +77,7 @@ fun PillarsStep(onComplete: () -> Unit) {
         entryGlow.animateTo(0f, tween(2200, easing = OrganicEasing))
     }
     val primary = MaterialTheme.colorScheme.primary
+    val surface = MaterialTheme.colorScheme.surface
 
     var enterVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -85,7 +86,7 @@ fun PillarsStep(onComplete: () -> Unit) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AtmosphericBackdrop(showForest = true, particleCount = 3, glowIntensity = 0.6f)
+        AtmosphericBackdrop(showForest = true, particleCount = 3, glowIntensity = 0.45f)
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val glow = entryGlow.value
@@ -123,44 +124,63 @@ fun PillarsStep(onComplete: () -> Unit) {
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-20).dp)
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .align(Alignment.TopCenter)
+                .padding(top = 160.dp)
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            PillarCard(
-                name = stringResource(Res.string.onboarding_pillar_atmosphere_name),
-                description = stringResource(Res.string.onboarding_pillar_atmosphere_desc),
-                icon = Icons.Outlined.GraphicEq,
-                entranceDelayMs = 400,
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                surface.copy(alpha = 0.55f),
+                                Color.Transparent,
+                            ),
+                        ),
+                    ),
             )
-            PillarCard(
-                name = stringResource(Res.string.onboarding_pillar_ritual_name),
-                description = stringResource(Res.string.onboarding_pillar_ritual_desc),
-                icon = Icons.Outlined.SelfImprovement,
-                entranceDelayMs = 700,
-            )
-            PillarCard(
-                name = stringResource(Res.string.onboarding_pillar_focus_name),
-                description = stringResource(Res.string.onboarding_pillar_focus_desc),
-                icon = Icons.Outlined.Schedule,
-                entranceDelayMs = 1000,
-            )
-            PillarCard(
-                name = stringResource(Res.string.onboarding_pillar_rest_name),
-                description = stringResource(Res.string.onboarding_pillar_rest_desc),
-                icon = Icons.Outlined.Bedtime,
-                entranceDelayMs = 1300,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PillarCard(
+                    name = stringResource(Res.string.onboarding_pillar_atmosphere_name),
+                    description = stringResource(Res.string.onboarding_pillar_atmosphere_desc),
+                    icon = Icons.Outlined.GraphicEq,
+                    entranceDelayMs = 400,
+                )
+                PillarCard(
+                    name = stringResource(Res.string.onboarding_pillar_ritual_name),
+                    description = stringResource(Res.string.onboarding_pillar_ritual_desc),
+                    icon = Icons.Outlined.SelfImprovement,
+                    entranceDelayMs = 700,
+                )
+                PillarCard(
+                    name = stringResource(Res.string.onboarding_pillar_focus_name),
+                    description = stringResource(Res.string.onboarding_pillar_focus_desc),
+                    icon = Icons.Outlined.Schedule,
+                    entranceDelayMs = 1000,
+                )
+                PillarCard(
+                    name = stringResource(Res.string.onboarding_pillar_rest_name),
+                    description = stringResource(Res.string.onboarding_pillar_rest_desc),
+                    icon = Icons.Outlined.Bedtime,
+                    entranceDelayMs = 1300,
+                )
+            }
         }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 60.dp),
+                .padding(bottom = 80.dp),
             contentAlignment = Alignment.BottomCenter,
         ) {
             AnimatedVisibility(
