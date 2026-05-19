@@ -63,7 +63,7 @@ fun BreathingOrb(
     val coreBorder = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f * intensity)
     val coreInner = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f * intensity)
     val coreMid = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f * intensity)
-    val haloColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f * intensity)
+    val haloColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f * intensity)
 
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(

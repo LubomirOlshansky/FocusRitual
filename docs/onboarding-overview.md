@@ -1,6 +1,7 @@
 # Onboarding Feature — Implementation Overview
 
 Kotlin Multiplatform / Compose Multiplatform. All UI in `commonMain`. Dark-only design system.
+All onboarding strings live in `composeResources/values/strings.xml` under `onboarding_*` keys.
 
 ---
 
@@ -13,25 +14,51 @@ feature/onboarding/
   OnboardingScreen.kt            — stateful host (creates VM, listens for completion)
   OnboardingScreenContent.kt     — stateless, AnimatedContent step router
   data/
-    OnboardingRepository.kt      — JsonStore-backed persistence (hasCompleted flag)
+    OnboardingRepository.kt      — JsonStore-backed persistence (hasCompleted flag + reset)
   components/
     AtmosphericBackdrop.kt       — stacks all background layers
     ForestKenBurnsLayer.kt       — slow scale+translateY on `background` drawable
     DriftingMistLayer.kt         — Canvas radial gradients, horizontal drift
     AmbientGlowPulse.kt          — large pulsing radial glow (primary color)
     DriftingParticleField.kt     — N floating 2dp dots with stable Random seeds
-    VignetteOverlay.kt           — Canvas radial vignette (Black allowed here only)
+    VignetteOverlay.kt           — Canvas radial vignette (Color.Black allowed here only)
     FilmGrainOverlay.kt          — vertical gradient tiled with BlendMode.Overlay
     BreathingOrb.kt              — 3 concentric rings (1x / 0.78x / 0.50x) + halo
-    PillButton.kt                — PulsingTapHint + ShimmerPillButton (shimmer drawWithContent)
-    StepIndicator.kt             — "— N / 3 —" label
+    PillButton.kt                — PulsingTapHint (no ShimmerPillButton — replaced by BreathingPillButton)
+    BreathingPillButton.kt       — breathing primary-halo ENTER button (4800ms synced to orb)
     AnimatedFadeIn.kt            — fade-only entrance helper
     AnimatedFadeUp.kt            — fade + 12dp lift entrance helper
   steps/
-    WelcomeStep.kt               — screen 1: full-screen tap, wordmark, tagline, intro copy
-    StepInsideStep.kt            — screen 2: BreathingOrb centerpiece
-    PillarsStep.kt               — screen 3: 3 PillarCards + ENTER button
+    WelcomeStep.kt               — screen 1: upper-third Column, wordmark, hairline, body
+    StepInsideStep.kt            — screen 2: orb as tap target + orb-morph exit animation
+    PillarsStep.kt               — screen 3: entry glow, 4 pillar cards, BreathingPillButton
 ```
+
+---
+
+## Strings
+
+All onboarding copy lives in `composeResources/values/strings.xml`. Keys:
+
+| Key | Value |
+|-----|-------|
+| `onboarding_welcome_wordmark` | FocusRitual |
+| `onboarding_welcome_tagline` | A QUIET SPACE |
+| `onboarding_welcome_body` | A space for focus.\nA space for rest. |
+| `onboarding_tap_to_continue` | TAP TO CONTINUE |
+| `onboarding_step_inside_title` | Step inside. |
+| `onboarding_step_inside_subtitle` | Breathe with the light. |
+| `onboarding_tap_the_light` | TAP THE LIGHT |
+| `onboarding_pillars_headline` | Your space.\nYour rhythm. |
+| `onboarding_pillar_atmosphere_name` | ATMOSPHERE |
+| `onboarding_pillar_atmosphere_desc` | Build your space |
+| `onboarding_pillar_ritual_name` | RITUAL |
+| `onboarding_pillar_ritual_desc` | Your daily practice |
+| `onboarding_pillar_focus_name` | FOCUS |
+| `onboarding_pillar_focus_desc` | Deep work, undisturbed |
+| `onboarding_pillar_rest_name` | REST |
+| `onboarding_pillar_rest_desc` | Drift into silence |
+| `onboarding_enter` | ENTER |
 
 ---
 
@@ -61,7 +88,7 @@ class OnboardingRepository(private val store: JsonStore = JsonStore()) {
     val hasCompletedFlow: StateFlow<Boolean> = _hasCompleted.asStateFlow()
 
     fun markCompleted() { /* writes State(completed=true) */ }
-    fun reset()         { /* writes State(completed=false), for debug toggle */ }
+    fun reset()         { /* writes State(completed=false) — used by debug toggle */ }
 
     @Serializable
     private data class State(val completed: Boolean = false)
@@ -82,10 +109,10 @@ Key constants:
 
 Lifecycle:
 - `init` → fades Wind 0 → 0.18 over 2 s
-- `AdvanceStep` from Welcome → fades Rain 0 → 0.30 over 1.5 s
-- `CompleteOnboarding` → writes `AmbientSnapshot(rain@0.30, wind@0.18)` to `AmbientStateRepository`, calls `markCompleted()`, emits `completedEvents: SharedFlow<Unit>` (extraBufferCapacity=1)
+- `AdvanceStep` from Welcome → fades Rain 0 → 0.30 over 1.5 s; fires `hapticController.onboardingAdvance()`
+- `CompleteOnboarding` → fires `hapticController.onboardingComplete()`, writes `AmbientSnapshot(rain@0.30, wind@0.18)` to `AmbientStateRepository`, calls `markCompleted()`, emits `completedEvents: SharedFlow<Unit>` (extraBufferCapacity=1)
 
-**Note:** The `SoundMixer` instance used here is a dedicated silent instance created in `App.kt` solely for onboarding. It does NOT share the Mixer screen's `SoundMixer`. Audio handoff is via the `AmbientSnapshot` written to disk; the Mixer screen hydrates from that snapshot when it initialises.
+**Audio handoff note:** Onboarding uses a *dedicated silent* `SoundMixer` created in `App.kt`. It does not share the Mixer screen's instance. Rain+wind state is persisted as `AmbientSnapshot` on disk; the Mixer screen hydrates from that snapshot via `reloadAmbientSnapshot()` when it initialises.
 
 ---
 
@@ -106,161 +133,278 @@ Creates ViewModel via `viewModel {}`, collects `completedEvents` → calls `onCo
 
 ---
 
-## Screen content (step router)
+## Screen content — step router & transitions
 
 ```kotlin
 AnimatedContent(
     targetState = state.currentStep,
     transitionSpec = {
-        (fadeIn(tween(900, FastOutSlowInEasing)) + scaleIn(tween(900, FastOutSlowInEasing), initialScale = 0.96f))
-            .togetherWith(fadeOut(tween(500)))
+        if (initialState == OnboardingStep.StepInside && targetState == OnboardingStep.Pillars) {
+            // Wide cross-fade — orb expansion + entry glow carry the visual morph
+            fadeIn(tween(900)).togetherWith(fadeOut(tween(900)))
+        } else {
+            // Standard enter: fade+scale / exit: fade
+            (fadeIn(tween(900, FastOutSlowInEasing)) +
+                scaleIn(tween(900, FastOutSlowInEasing), initialScale = 0.96f))
+                .togetherWith(fadeOut(tween(500)))
+        }
     }
-) { step -> WelcomeStep / StepInsideStep / PillarsStep }
+)
 ```
+
+---
+
+## Animation rhythm table
+
+| Screen | Element | Delay (ms) | Duration (ms) | Easing |
+|--------|---------|-----------|---------------|--------|
+| 1 | Wordmark (FadeUp) | 0 | 2400 | FastOutSlowIn |
+| 1 | Hairline accent (FadeIn) | 600 | 2400 | FastOutSlowIn |
+| 1 | Tagline (FadeIn) | 800 | 3000 | FastOutSlowIn |
+| 1 | Body copy + scrim (FadeIn) | 1400 | 3000 | FastOutSlowIn |
+| 1 | TAP TO CONTINUE (pulse) | — | 2800 loop | FastOutSlowIn |
+| 2 | "Step inside." (FadeIn) | 200 | 1800 | FastOutSlowIn |
+| 2 | "Breathe with the light." (FadeIn) | 800 | 2400 | FastOutSlowIn |
+| 2 | TAP THE LIGHT label (pulse) | — | 7200 loop | FastOutSlowIn |
+| 2 | Outer pulse ring (infinite) | — | 4800 loop Restart | FastOutSlowIn |
+| 2→3 | Orb expand on tap | 0 | 1800 | OrganicEasing |
+| 2→3 | Content alpha fade-out | 0 | 700 | — |
+| 2→3 | First haptic (onboardingAdvance) | 0 | — | — |
+| 2→3 | Second haptic + onAdvance() fires | 1200 | — | — |
+| 2→3 | Screen transition | 0 | 900 | fade only |
+| 3 | Entry glow dissipate | 0 | 2200 | OrganicEasing |
+| 3 | Headline (FadeIn) | 200 | 1800 | FastOutSlowIn |
+| 3 | Card 1 ATMOSPHERE | 400 | 800 | FastOutSlowIn |
+| 3 | Card 2 RITUAL | 700 | 800 | FastOutSlowIn |
+| 3 | Card 3 FOCUS | 1000 | 800 | FastOutSlowIn |
+| 3 | Card 4 REST | 1300 | 800 | FastOutSlowIn |
+| 3 | ENTER button (fadeIn) | 1700 | 1200 | — |
+| 3 | ENTER outer pulse ring (infinite) | — | 4800 loop Restart | FastOutSlowIn |
 
 ---
 
 ## Step 1 — WelcomeStep
 
-Full-screen `Box`, clickable anywhere → `AdvanceStep`. No step indicator.
+Tap anywhere on screen → `AdvanceStep`. No step indicator.
 
-Layout (all `Box` layers stacked):
-- `AtmosphericBackdrop(showForest=true, particleCount=5, glowIntensity=1f)`
-- **Wordmark** "FocusRitual" — `AnimatedFadeUp(delay=0, duration=2400)`, offset y=−30dp, W200, 27sp, alpha 0.92
-- **Tagline** "A QUIET SPACE" — `AnimatedFadeIn(delay=800, duration=3000)`, 10sp, W300, letterSpacing 0.32em, alpha 0.40
-- **Body** "An ambient companion…" — `AnimatedFadeIn(delay=1400, duration=3000)`, 13sp, W300, lineHeight 22sp, alpha 0.60, padding bottom 130dp
-- **PulsingTapHint** "TAP TO CONTINUE" — padding bottom 36dp
+Two anchored Columns inside the full-screen tap Box:
+
+```
+Box (fillMaxSize, clickable anywhere)
+├── AtmosphericBackdrop(showForest=true, particleCount=5, glowIntensity=1f)
+│
+├── Column (Alignment.TopCenter, padding top 110dp, CenterHorizontally)
+│   ├── AnimatedFadeUp(0ms, 2400ms)   →  "FocusRitual"  34sp W200  alpha 0.92
+│   ├── Spacer 12dp
+│   ├── AnimatedFadeIn(600ms, 2400ms) →  Box 28×0.5dp  onSurface@0.20  (hairline)
+│   ├── Spacer 14dp
+│   └── AnimatedFadeIn(800ms, 3000ms) →  "A QUIET SPACE"  11sp W300  ls 0.32em  alpha 0.42
+│
+└── Column (Alignment.BottomCenter, padding bottom 56dp, CenterHorizontally)
+    └── AnimatedFadeIn(1400ms, 3000ms)
+        ├── Box (contentAlignment=Center)   ← scrim + body stacked
+        │   ├── SCRIM  Box 260×72dp  softBlur(16dp)
+        │   │          radialGradient(surface@0.55 → Transparent)
+        │   └── Text  "A space for focus.\nA space for rest."
+        │             16sp lh 24sp W300  textAlign Center  alpha 0.78
+        ├── Spacer 36dp
+        └── PulsingTapHint("TAP TO CONTINUE")
+```
 
 ---
 
 ## Step 2 — StepInsideStep
 
-Full-screen `Box`, clickable anywhere → `AdvanceStep`.
+**The orb is the only tap target.** No bottom hint, no step indicator.
 
-Layout:
-- `AtmosphericBackdrop(showForest=false, particleCount=6, glowIntensity=0.7f)`
-- `StepIndicator("— 2 / 3 —")` — top center, padding top 58dp
-- `Column` padding top 150dp: "Step inside." (22sp W300, alpha 0.85) + "Breathe with the light.…" (11sp W300, alpha 0.40)
-- `BreathingOrb(size=180.dp)` — centered, offset y=+60dp
-- `PulsingTapHint("TAP TO CONTINUE")` — bottom 36dp
+### Exit animation (orb-morph)
+
+On orb tap → sets `isExiting = true`:
+- `orbSize` 240dp → **1100dp**, tween(**1800**) **OrganicEasing**
+- `orbIntensity` 1f → **3.5f**, tween(**1800**) **OrganicEasing**
+- `contentAlpha` 1f → 0f, tween(**700**)
+- Immediate: `hapticController.onboardingAdvance()` (first)
+- After **1200ms** delay: `hapticController.onboardingAdvance()` (second) → `onAdvance()` fires
+
+`val orbOffsetY = 60.dp` is the **single source** used by both the outer pulse ring center and the orb `offset(y = orbOffsetY)` — keeping them locked together.
+
+```
+Box (fillMaxSize)
+├── AtmosphericBackdrop(showForest=false, particleCount=15, glowIntensity=0.85f)
+├── Canvas (fillMaxSize)   ← outer pulse ring (drawn behind orb)
+│   pulseScale 1→2.4, pulseAlpha 0.25→0, 4800ms Restart FastOutSlowIn
+│   center = (width/2, height/2 + orbOffsetY), radius = 120.dp × pulseScale
+│   stroke 0.5dp  onSurface@(pulseAlpha × contentAlpha)
+├── Column (padding top 130dp, .alpha(contentAlpha), CenterHorizontally)
+│   ├── AnimatedFadeIn(200ms, 1800ms) → "Step inside."  30sp W300  alpha 0.88
+│   ├── Spacer 16dp
+│   └── AnimatedFadeIn(800ms, 2400ms) → "Breathe with the light."  13sp lh 21sp W300  alpha 0.48
+├── Box (size 320dp, Alignment.Center, offset y = orbOffsetY, clickable → orb-morph + advance)
+│   └── BreathingOrb(size = orbSize, intensity = orbIntensity)
+└── "TAP THE LIGHT"  10sp W300  ls 0.28em  alpha = labelAlpha×contentAlpha
+    labelAlpha: 0.20→0.55 over 7200ms FastOutSlowIn (synced to outer ring breath)
+    aligned BottomCenter  pb 80dp
+```
 
 ---
 
 ## Step 3 — PillarsStep
 
-No tap-to-advance (only the ENTER button advances).
+Opens with a dissipating primary glow completing the orb-morph visual.
 
-Layout:
-- `AtmosphericBackdrop(showForest=true, particleCount=3, glowIntensity=0.8f)`
-- `StepIndicator("— 3 / 3 —")` — top center, padding top 58dp
-- Headline "A small space,\nthree ways to inhabit it." — 17sp W300, alpha 0.88, padding top 88dp
-- `Column(verticalArrangement=spacedBy(10dp))` at padding top 180dp: 3 × `PillarCard`
-- `ShimmerPillButton("ENTER")` — bottom 50dp → `CompleteOnboarding`
+### Entry glow
 
-### PillarCard details
+`Animatable(1f)` → animateTo(0f, tween(**2200**, easing = **OrganicEasing**)) on `LaunchedEffect(Unit)`.
 
-| Card   | Icon                       | Name   | Entrance delay |
-|--------|----------------------------|--------|----------------|
-| 1      | `Icons.Outlined.GraphicEq` | MIXER  | 400 ms         |
-| 2      | `Icons.Outlined.Schedule`  | FOCUS  | 800 ms         |
-| 3      | `Icons.Outlined.Bedtime`   | SLEEP  | 1200 ms        |
+Canvas draws a radial gradient at center:
+- Stops: `primary@(0.35×glow)` → `primary@(0.08×glow)` → `Transparent`
+- Radius: `minDimension × 0.7 × (1.2 + (1−glow) × 0.6)` — expands slightly as it fades
 
-Each card: `animateFloatAsState` alpha 0→1 + `animateDpAsState` offsetY 8dp→0 over 800ms FastOutSlowInEasing on `visible` flag set after delay. Halo ring uses `rememberInfiniteTransition` with `StartOffset(entranceDelayMs)` for phase stagger (scale 0.95→1.10, alpha 0.2→0.7, 5000ms). Card background `onSurface@0.05`, border `onSurface@0.10`, radius 14dp.
+```
+Box (fillMaxSize)
+├── AtmosphericBackdrop(showForest=true, particleCount=3, glowIntensity=0.6f)
+├── Canvas (entry glow — 1400ms dissipation)
+├── Column (padding top 88dp, CenterHorizontally)
+│   └── AnimatedFadeIn(200ms, 1800ms) → "Your space.\nYour rhythm."
+│                                        22sp lh 30sp W300  alpha 0.90
+├── Column (Alignment.Center, offset y −20dp, padding h 24dp, spacedBy 10dp)
+│   ├── PillarCard("ATMOSPHERE", "Build your space",    GraphicEq,       400ms)
+│   ├── PillarCard("RITUAL",     "Your daily practice", SelfImprovement, 700ms)
+│   ├── PillarCard("FOCUS",      "Deep work, undisturbed", Schedule,     1000ms)
+│   └── PillarCard("REST",       "Drift into silence",  Bedtime,         1300ms)
+└── AnimatedVisibility(enterVisible @ 1700ms, fadeIn 1200ms)  aligned BottomCenter  pb 60dp
+    └── BreathingPillButton("ENTER", onClick = onComplete)
+```
+
+### PillarCard
+
+Per-card entrance: `visible` flag set after `entranceDelayMs`. `animateFloatAsState` alpha 0→1 + `animateDpAsState` offsetY 8dp→0, both tween(800) FastOutSlowInEasing.
+
+Visual:
+- Background `onSurface@0.10`, border 0.5dp `onSurface@0.22`, radius 16dp
+- `drawWithContent` draws a top highlight line: `onSurface@0.28`, y=0.5px, x 20→(width−20)
+- Padding horizontal 18dp, vertical 16dp
+- Icon 22dp `onSurface@0.70` | name 13sp W400 ls 0.12em `onSurface@0.92` | desc 12sp W300 `onSurface@0.55`
 
 ---
 
 ## Components
 
 ### AtmosphericBackdrop
-Stacks (bottom → top): surface background → ForestKenBurnsLayer (optional) → DriftingMistLayer → AmbientGlowPulse → DriftingParticleField → VignetteOverlay → FilmGrainOverlay.
+Layer stack (bottom → top):
+`surface bg` → `ForestKenBurnsLayer` (if showForest) → `DriftingMistLayer` → `AmbientGlowPulse` → `DriftingParticleField` → `VignetteOverlay` → `FilmGrainOverlay`
 
 ### ForestKenBurnsLayer
-`Res.drawable.background` image, slow Ken Burns: scale 1.0→1.06 + translateY 0→−6px, 24 s linear, RepeatMode.Reverse.
+`Res.drawable.background`, ContentScale.Crop. Scale 1.0→1.06 + translateY 0→−6px, 24 s Linear, Reverse.
 
 ### DriftingMistLayer
-Canvas. Two overlapping radial gradients (`onSurface@0.05`) blended with `BlendMode.Screen`. Horizontal drift −12→14dp over 22 s.
+Canvas, two `BlendMode.Screen` radial gradients (`onSurface@0.05`). Horizontal drift −12→14dp, 22 s Linear, Reverse.
 
 ### AmbientGlowPulse
-340dp circle, radial gradient center `primary@(0.06×intensity)` → transparent. Scale 0.92→1.08, alpha 0.6→1.0, 7 s FastOutSlowInEasing, Reverse.
+340dp Circle. Radial gradient `primary@(0.06×intensity)` → transparent. Scale 0.92→1.08 + alpha 0.6→1.0, 7 s FastOutSlowIn, Reverse.
 
 ### DriftingParticleField
-`count` particles. Each has stable `Random` seeds stored in `remember(count)`. Each particle: 2dp circle, `softBlur(0.3dp)`, drifts via `IntOffset`, fades alpha 0→maxAlpha (0.3–0.8), 11–16 s, phase-offset 0–5 s.
+`count` particles, seeds stable in `remember(count)`. Each: 2dp circle, `softBlur(0.3dp)`, drifts via `IntOffset`, alpha 0→maxAlpha (0.3–0.8), 11–16 s, phase-offset 0–5 s.
 
 ### VignetteOverlay
-Canvas radial gradient: transparent at 0.3 → `Color.Black@0.65` at 1.0. Radius = 0.75× max(w,h). (`Color.Black` is permitted only here.)
+Canvas radial gradient: transparent@0.3 → `Color.Black@0.65`@1.0. Radius = 0.75× max(w,h). (`Color.Black` permitted only here.)
 
 ### FilmGrainOverlay
-Canvas. 3px-stride vertical gradient tiled with `TileMode.Repeated`, `BlendMode.Overlay`, `onSurface@0.025`.
+Canvas. 3px-stride vertical gradient tiled `TileMode.Repeated`, `BlendMode.Overlay`, `onSurface@0.025`.
 
 ### BreathingOrb (`size: Dp`, `intensity: Float = 1f`)
-- Halo: `size×1.5`, `softBlur(28dp)`, radial gradient `primary@(0.10×intensity)` → transparent
-- Outer ring: `size`, border `onSurface@(0.10×intensity)`, scale 0.96→1.04, 7200ms `OrganicEasing`
-- Middle ring: `size×0.78`, border `onSurface@(0.14×intensity)`, scale 0.97→1.03, 4800ms FastOutSlowInEasing
-- Core: `size×0.50`, radial fill `onSurface@(0.16×intensity)` → `onSurface@(0.04×intensity)` → transparent, border `onSurface@(0.20×intensity)`, scale 0.98→1.02, 4800ms
+
+All animations loop forever (Reverse):
+
+| Layer | Size | Animation | Duration | Easing |
+|-------|------|-----------|----------|--------|
+| Halo | size×1.5 | none (static) | — | — |
+| Outer ring | size | scale 0.96→1.04 | 7200ms | OrganicEasing |
+| Middle ring | size×0.78 | scale 0.97→1.03 | 4800ms | FastOutSlowIn |
+| Core | size×0.50 | scale 0.98→1.02 | 4800ms | FastOutSlowIn |
+
+- Halo: `softBlur(28dp)`, radial gradient `primary@(0.14×intensity)` → transparent
+- Outer border: `onSurface@(0.10×intensity)`
+- Middle border: `onSurface@(0.14×intensity)`
+- Core: radial fill `onSurface@(0.16×intensity)` center → `onSurface@(0.04×intensity)` → transparent; border `onSurface@(0.20×intensity)`
 
 ### PulsingTapHint
-Text label, alpha pulses 0.25→0.65 over 3 s FastOutSlowInEasing Reverse. 9sp W300, letterSpacing 0.22em.
+Alpha 0.42→0.88, 2800ms FastOutSlowIn Reverse. 10sp W300 letterSpacing 0.24em. Used on screen 1 only.
 
-### ShimmerPillButton
-Pill shape (radius 24dp), `onSurface@0.10` fill, `onSurface@0.16` border, `drawWithContent` sweeping shimmer `onSurface@0.08`. Scale 0.97 on press. 10sp W300, letterSpacing 0.2em, text `onSurface@0.88`.
+### BreathingPillButton
+Used only for the ENTER button on screen 3. Five infinite animations on the same transition (all 4800ms, same period as orb middle/core):
+
+| Animated value | Range | RepeatMode |
+|----------------|-------|------------|
+| `haloScale` | 0.92 → 1.20 | Reverse |
+| `haloAlpha` | 0.26 → 0.54 | Reverse |
+| `pillScale` | 0.97 → 1.03 | Reverse |
+| `pulseScale` | 1.0 → 1.8 | Restart |
+| `pulseAlpha` | 0.22 → 0 | Restart |
+
+Layout (Box, Alignment.Center — layers bottom → top):
+1. **Outer pulse ring** — `Canvas(320dp)`: circle stroke 0.5dp `primary@pulseAlpha`, radius `(size.minDimension/2) × pulseScale`
+2. **Halo** — 320dp Box, `scale(haloScale)`, `softBlur(28dp)`, radial gradient `primary@haloAlpha` → transparent, radius 400f
+3. **Pill** — `clip(RoundedCornerShape(28dp))`, background `onSurface@0.10`, border 0.5dp `onSurface@0.28`
+
+- Press: `pointerInput + detectTapGestures`, pressScale 1f→0.97f over 120ms. No ripple.
+- Text: label **13sp** W300 ls 0.22em `onSurface@0.95`, padding h **52dp** v **16dp**
 
 ### AnimatedFadeIn / AnimatedFadeUp
-Entrance helpers: `LaunchedEffect(Unit)` sets `visible = true` after `delayMs`. FadeUp also translates from +12dp.
-
-### StepIndicator
-Small text label: 8.5sp W300, letterSpacing 0.3em, `onSurface@0.30`.
+`LaunchedEffect(Unit)` delays then sets `visible = true`. FadeUp adds 12dp Y translate. Both use FastOutSlowInEasing.
 
 ---
 
 ## App.kt wiring
 
 ```kotlin
-// First launch detection (read once)
 val onboardingRepository = remember { OnboardingRepository() }
+val ambientStateRepository = remember { AmbientStateRepository() }
+val onboardingSoundMixer = remember { SoundMixer() }   // silent, onboarding only
+
 val initialScreen = remember {
     if (onboardingRepository.hasCompletedFlow.value) AppScreen.Mixer else AppScreen.Onboarding
 }
 val seedDefaults = remember { onboardingRepository.hasCompletedFlow.value }
 
-// Dedicated silent SoundMixer for onboarding audio fade logic
-val onboardingSoundMixer = remember { SoundMixer() }
-
-// MixerViewModel gets seedDefaultsIfEmpty=false when onboarding hasn't run yet
 val mixerViewModel = viewModel {
     MixerViewModel(..., seedDefaultsIfEmpty = seedDefaults)
 }
 
-// On Onboarding screen branch:
+// Onboarding branch:
 OnboardingScreen(
     onboardingRepository = onboardingRepository,
     soundMixer = onboardingSoundMixer,
     hapticController = hapticController,
     ambientStateRepository = ambientStateRepository,
     onComplete = {
-        mixerViewModel.reloadAmbientSnapshot()  // picks up rain+wind snapshot from disk
+        mixerViewModel.reloadAmbientSnapshot()   // picks up rain+wind from disk
         currentScreen = AppScreen.Mixer
     }
 )
 
-// Transition: fadeIn(800ms) + scaleIn(0.96f, EaseOutCubic) enter / fadeOut(600ms) + scaleOut(1.02f) exit
+// Transition into Mixer:
+// Enter: fadeIn(800ms) + scaleIn(0.96f, EaseOutCubic)
+// Exit:  fadeOut(600ms) + scaleOut(1.02f)
 ```
 
 ---
 
 ## Design constraints
 
-- Dark-only. All colors via `MaterialTheme.colorScheme.*` — no `Color(0xFF…)`, no `Color.White`. Exception: `Color.Black` in `VignetteOverlay` only.
-- Font weights: W200 (wordmark), W300 (body/labels), W400 (cards).
-- No ripple on any clickable (`indication = null`).
-- Press feedback: `scale(0.97f)` via `animateFloatAsState`.
-- `softBlur` is an `expect/actual` shim — on Android it gates on API ≥ 31; on iOS it runs unconditionally.
-- `OrganicEasing` lives at `core/designsystem/Motion.kt` (shared).
+- Dark-only. All colors via `MaterialTheme.colorScheme.*`. No `Color(0xFF…)`, no `Color.White`. `Color.Black` only in `VignetteOverlay`.
+- Font weights: W200 (wordmark), W300 (body, labels, button), W400 (card names).
+- Border thickness: 0.5dp everywhere.
+- No ripple on any clickable (`indication = null`). ENTER uses `pointerInput + detectTapGestures`.
+- Press feedback: scale 0.97 via `animateFloatAsState(120ms)`.
+- `softBlur`: `expect/actual` shim — Android gates on API ≥ 31; iOS unconditional.
+- `OrganicEasing` at `core/designsystem/theme/Motion.kt` (import: `com.focusritual.app.core.designsystem.theme.OrganicEasing`).
 
 ---
 
 ## Debug toggle
 
-Settings sheet → **Debug** section → "Show onboarding on next launch" switch.
-- ON → calls `onboardingRepository.reset()` → next cold launch shows onboarding.
-- OFF → calls `onboardingRepository.markCompleted()` → next cold launch goes to Mixer.
+Settings → **Debug** section → "Show onboarding on next launch" switch.
+- **ON** → `onboardingRepository.reset()` → next cold launch shows onboarding.
+- **OFF** → `onboardingRepository.markCompleted()` → next cold launch skips to Mixer.
 - Subtitle: "Relaunch app to take effect".

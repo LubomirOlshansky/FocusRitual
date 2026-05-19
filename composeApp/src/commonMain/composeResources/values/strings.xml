@@ -126,4 +126,22 @@
     <string name="timer_phase_focus">Focus Session</string>
     <string name="timer_phase_break">Break</string>
     <string name="timer_return_to_sanctuary">Return to sanctuary</string>
+
+    <string name="onboarding_welcome_wordmark">FocusRitual</string>
+    <string name="onboarding_welcome_tagline">A QUIET SPACE</string>
+    <string name="onboarding_welcome_body">A space for focus.\nA space for rest.</string>
+    <string name="onboarding_tap_to_continue">TAP TO CONTINUE</string>
+    <string name="onboarding_step_inside_title">Step inside.</string>
+    <string name="onboarding_step_inside_subtitle">Breathe with the light.</string>
+    <string name="onboarding_tap_the_light">TAP THE LIGHT</string>
+    <string name="onboarding_pillars_headline">Your space.\nYour rhythm.</string>
+    <string name="onboarding_pillar_atmosphere_name">ATMOSPHERE</string>
+    <string name="onboarding_pillar_atmosphere_desc">Build your space</string>
+    <string name="onboarding_pillar_ritual_name">RITUAL</string>
+    <string name="onboarding_pillar_ritual_desc">Your daily practice</string>
+    <string name="onboarding_pillar_focus_name">FOCUS</string>
+    <string name="onboarding_pillar_focus_desc">Deep work, undisturbed</string>
+    <string name="onboarding_pillar_rest_name">REST</string>
+    <string name="onboarding_pillar_rest_desc">Drift into silence</string>
+    <string name="onboarding_enter">ENTER</string>
 </resources>

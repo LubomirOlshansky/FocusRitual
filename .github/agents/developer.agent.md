@@ -1,7 +1,7 @@
 ---
 name: 'Developer'
 description: 'Top-level/user-selected orchestrator for FocusRitual development tasks. Delegates ALL implementation to Developer Internal / Architect Internal subagents and verifies results. Never writes code directly.'
-tools: [execute, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, agent, search, web, 'oraios/serena/*', todo]
+tools: [vscode, execute, read, agent, edit, search, web, browser, 'oraios/serena/*', todo]
 ---
 
 # Developer Agent (Orchestrator)

@@ -1,7 +1,7 @@
 ---
 name: 'Developer Internal'
 description: 'Focused Kotlin Multiplatform / Swift developer for executing well-defined FocusRitual implementation tasks. Does not spawn subagents.'
-tools: [execute, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit, search, web, 'oraios/serena/*', todo]
+tools: [vscode, execute, read, edit, search, web, browser, 'oraios/serena/*', todo]
 user-invocable: false
 ---
 

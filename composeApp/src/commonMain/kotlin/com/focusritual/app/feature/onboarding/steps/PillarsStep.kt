@@ -1,31 +1,33 @@
 package com.focusritual.app.feature.onboarding.steps
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,7 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -45,84 +52,135 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.focusritual.app.core.designsystem.theme.OrganicEasing
+import com.focusritual.app.feature.onboarding.components.AnimatedFadeIn
 import com.focusritual.app.feature.onboarding.components.AtmosphericBackdrop
-import com.focusritual.app.feature.onboarding.components.ShimmerPillButton
-import com.focusritual.app.feature.onboarding.components.StepIndicator
+import com.focusritual.app.feature.onboarding.components.BreathingPillButton
+import focusritual.composeapp.generated.resources.Res
+import focusritual.composeapp.generated.resources.onboarding_enter
+import focusritual.composeapp.generated.resources.onboarding_pillar_atmosphere_desc
+import focusritual.composeapp.generated.resources.onboarding_pillar_atmosphere_name
+import focusritual.composeapp.generated.resources.onboarding_pillar_focus_desc
+import focusritual.composeapp.generated.resources.onboarding_pillar_focus_name
+import focusritual.composeapp.generated.resources.onboarding_pillar_rest_desc
+import focusritual.composeapp.generated.resources.onboarding_pillar_rest_name
+import focusritual.composeapp.generated.resources.onboarding_pillar_ritual_desc
+import focusritual.composeapp.generated.resources.onboarding_pillar_ritual_name
+import focusritual.composeapp.generated.resources.onboarding_pillars_headline
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PillarsStep(onComplete: () -> Unit) {
+    val entryGlow = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        entryGlow.animateTo(0f, tween(2200, easing = OrganicEasing))
+    }
+    val primary = MaterialTheme.colorScheme.primary
+
+    var enterVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(1700)
+        enterVisible = true
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        AtmosphericBackdrop(showForest = true, particleCount = 3, glowIntensity = 0.8f)
+        AtmosphericBackdrop(showForest = true, particleCount = 3, glowIntensity = 0.6f)
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 58.dp),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            StepIndicator("— 3 / 3 —")
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 88.dp, start = 24.dp, end = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = "A small space,\nthree ways to inhabit it.",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.W300,
-                lineHeight = 24.sp,
-                letterSpacing = 0.01.em,
-                textAlign = TextAlign.Center,
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val glow = entryGlow.value
+            val radius = size.minDimension * 0.7f * (1.2f + (1f - glow) * 0.6f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colorStops = arrayOf(
+                        0f to primary.copy(alpha = 0.35f * glow),
+                        0.5f to primary.copy(alpha = 0.08f * glow),
+                        1f to Color.Transparent,
+                    ),
+                    center = center,
+                    radius = radius,
+                ),
+                radius = radius,
+                center = center,
             )
         }
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 180.dp, start = 24.dp, end = 24.dp),
+                .fillMaxWidth()
+                .padding(top = 88.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            AnimatedFadeIn(delayMs = 200, durationMs = 1800) {
+                Text(
+                    text = stringResource(Res.string.onboarding_pillars_headline),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f),
+                    fontSize = 22.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.W300,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = (-20).dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             PillarCard(
+                name = stringResource(Res.string.onboarding_pillar_atmosphere_name),
+                description = stringResource(Res.string.onboarding_pillar_atmosphere_desc),
                 icon = Icons.Outlined.GraphicEq,
-                name = "MIXER",
-                description = "Layer ambient sounds into your own atmosphere.",
                 entranceDelayMs = 400,
             )
             PillarCard(
-                icon = Icons.Outlined.Schedule,
-                name = "FOCUS",
-                description = "Timed work sessions with breaks. Block distractions.",
-                entranceDelayMs = 800,
+                name = stringResource(Res.string.onboarding_pillar_ritual_name),
+                description = stringResource(Res.string.onboarding_pillar_ritual_desc),
+                icon = Icons.Outlined.SelfImprovement,
+                entranceDelayMs = 700,
             )
             PillarCard(
+                name = stringResource(Res.string.onboarding_pillar_focus_name),
+                description = stringResource(Res.string.onboarding_pillar_focus_desc),
+                icon = Icons.Outlined.Schedule,
+                entranceDelayMs = 1000,
+            )
+            PillarCard(
+                name = stringResource(Res.string.onboarding_pillar_rest_name),
+                description = stringResource(Res.string.onboarding_pillar_rest_desc),
                 icon = Icons.Outlined.Bedtime,
-                name = "SLEEP",
-                description = "A countdown that fades to silence as you drift off.",
-                entranceDelayMs = 1200,
+                entranceDelayMs = 1300,
             )
         }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 50.dp),
+                .padding(bottom = 60.dp),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            ShimmerPillButton(text = "ENTER", onClick = onComplete)
+            AnimatedVisibility(
+                visible = enterVisible,
+                enter = fadeIn(tween(1200)),
+            ) {
+                BreathingPillButton(
+                    label = stringResource(Res.string.onboarding_enter),
+                    onClick = onComplete,
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun PillarCard(
-    icon: ImageVector,
     name: String,
     description: String,
+    icon: ImageVector,
     entranceDelayMs: Int,
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -139,92 +197,54 @@ private fun PillarCard(
         animationSpec = tween(800, easing = FastOutSlowInEasing),
     )
 
-    val haloTransition = rememberInfiniteTransition()
-    val haloScale by haloTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.10f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(5000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(entranceDelayMs),
-        ),
-    )
-    val haloAlpha by haloTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(5000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(entranceDelayMs),
-        ),
-    )
-
-    val bg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-    val border = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
-    val iconBg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
-    val iconBorder = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f)
-    val haloBorder = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+    val bg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+    val borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
+    val highlight = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
     val iconTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f)
+    val nameColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f)
+    val descColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                this.alpha = alpha
-                translationY = offsetY.toPx()
-            }
-            .clip(RoundedCornerShape(14.dp))
+            .offset(y = offsetY)
+            .alpha(alpha)
+            .clip(RoundedCornerShape(16.dp))
             .background(bg)
-            .border(0.5.dp, border, RoundedCornerShape(14.dp))
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier.size(42.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .graphicsLayer {
-                        scaleX = haloScale
-                        scaleY = haloScale
-                        this.alpha = haloAlpha
-                    }
-                    .clip(CircleShape)
-                    .border(0.5.dp, haloBorder, CircleShape),
-            )
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(iconBg)
-                    .border(0.5.dp, iconBorder, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(15.dp),
+            .border(0.5.dp, borderColor, RoundedCornerShape(16.dp))
+            .drawWithContent {
+                drawContent()
+                drawLine(
+                    color = highlight,
+                    start = Offset(20f, 0.5f),
+                    end = Offset(size.width - 20f, 0.5f),
+                    strokeWidth = 1f,
                 )
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
             Text(
                 text = name,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
-                fontSize = 11.sp,
+                color = nameColor,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.W400,
-                letterSpacing = 0.14.em,
+                letterSpacing = 0.12.em,
             )
+            Spacer(Modifier.height(3.dp))
             Text(
                 text = description,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                fontSize = 10.5.sp,
+                color = descColor,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.W300,
-                lineHeight = 16.sp,
             )
         }
     }

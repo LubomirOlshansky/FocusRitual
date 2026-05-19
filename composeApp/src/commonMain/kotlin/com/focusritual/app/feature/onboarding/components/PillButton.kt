@@ -37,10 +37,10 @@ import androidx.compose.ui.unit.sp
 fun PulsingTapHint(text: String, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition()
     val alpha by transition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.65f,
+        initialValue = 0.42f,
+        targetValue = 0.88f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = FastOutSlowInEasing),
+            animation = tween(2800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
     )
@@ -48,8 +48,8 @@ fun PulsingTapHint(text: String, modifier: Modifier = Modifier) {
         text = text,
         modifier = modifier,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
-        fontSize = 9.sp,
-        letterSpacing = 0.22.em,
+        fontSize = 10.sp,
+        letterSpacing = 0.24.em,
         fontWeight = FontWeight.W300,
     )
 }

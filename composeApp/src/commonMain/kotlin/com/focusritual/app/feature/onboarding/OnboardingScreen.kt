@@ -30,5 +30,5 @@ fun OnboardingScreen(
     LaunchedEffect(viewModel) {
         viewModel.completedEvents.collect { onComplete() }
     }
-    OnboardingScreenContent(state = state, onIntent = viewModel::onIntent)
+    OnboardingScreenContent(state = state, hapticController = hapticController, onIntent = viewModel::onIntent)
 }
