@@ -2,6 +2,7 @@ package com.focusritual.app
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.FocusRitualTheme
+import com.focusritual.app.core.audio.SoundMixer
 import com.focusritual.app.core.haptic.HapticController
 import com.focusritual.app.core.haptic.HapticSettingsRepository
 import com.focusritual.app.app.integration.liveactivity.LiveActivityEffect
@@ -26,6 +28,8 @@ import com.focusritual.app.feature.mixer.MixerScreen
 import com.focusritual.app.feature.mixer.MixerViewModel
 import com.focusritual.app.feature.mixer.data.AmbientStateRepository
 import com.focusritual.app.feature.mixer.data.MixPresetRepository
+import com.focusritual.app.feature.onboarding.OnboardingScreen
+import com.focusritual.app.feature.onboarding.data.OnboardingRepository
 import com.focusritual.app.feature.session.FocusSessionScreen
 import com.focusritual.app.feature.session.SessionConfig
 import com.focusritual.app.feature.settings.SettingsModal
@@ -36,6 +40,7 @@ import com.focusritual.app.feature.timer.ActiveSessionScreen
 import com.focusritual.app.feature.timer.ActiveSessionViewModel
 
 sealed interface AppScreen {
+    data object Onboarding : AppScreen
     data object Mixer : AppScreen
     data object FocusSession : AppScreen
     data class ActiveSession(val config: SessionConfig, val sessionId: Int = 0) : AppScreen
@@ -44,18 +49,28 @@ sealed interface AppScreen {
 @Composable
 fun App() {
     FocusRitualTheme {
-        var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Mixer) }
-        var sessionKey by remember { mutableIntStateOf(0) }
-        var showSettings by remember { mutableStateOf(false) }
         val hapticSettingsRepository = remember { HapticSettingsRepository.Default }
         val hapticController = remember(hapticSettingsRepository) {
             HapticController(settingsRepository = hapticSettingsRepository)
         }
-        
+        val onboardingRepository = remember { OnboardingRepository() }
+        val ambientStateRepository = remember { AmbientStateRepository() }
+        val onboardingSoundMixer = remember { SoundMixer() }
+
+        val initialScreen = remember {
+            if (onboardingRepository.hasCompletedFlow.value) AppScreen.Mixer else AppScreen.Onboarding
+        }
+        val seedDefaults = remember { onboardingRepository.hasCompletedFlow.value }
+
+        var currentScreen by remember { mutableStateOf<AppScreen>(initialScreen) }
+        var sessionKey by remember { mutableIntStateOf(0) }
+        var showSettings by remember { mutableStateOf(false) }
+
         val mixerViewModel: MixerViewModel = viewModel {
             MixerViewModel(
                 presetRepo = MixPresetRepository(),
-                ambientRepo = AmbientStateRepository(),
+                ambientRepo = ambientStateRepository,
+                seedDefaultsIfEmpty = seedDefaults,
                 hapticController = hapticController,
             )
         }
@@ -64,6 +79,7 @@ fun App() {
                 repository = SettingsRepository(
                     hapticSettingsRepository = hapticSettingsRepository,
                 ),
+                onboardingRepository = onboardingRepository,
             )
         }
         val mixerState by mixerViewModel.uiState.collectAsStateWithLifecycle()
@@ -118,6 +134,15 @@ fun App() {
                     val initial = initialState
                     val target = targetState
                     when {
+                        // Onboarding -> Mixer : "Stepping into the ritual" — gentle bloom
+                        initial is AppScreen.Onboarding && target is AppScreen.Mixer -> {
+                            val enter = fadeIn(tween(800)) +
+                                scaleIn(tween(800, easing = EaseOutCubic), initialScale = 0.96f)
+                            val exit = fadeOut(tween(600)) +
+                                scaleOut(tween(600), targetScale = 1.02f)
+                            enter togetherWith exit
+                        }
+
                         // Mixer -> FocusSession : "A thought surfaces" — rises with weight from beneath
                         initial is AppScreen.Mixer && target is AppScreen.FocusSession -> {
                             val enter = slideInVertically(
@@ -179,6 +204,16 @@ fun App() {
                 label = "AppScreenTransition",
             ) { screen ->
                 when (screen) {
+                    AppScreen.Onboarding -> OnboardingScreen(
+                        onboardingRepository = onboardingRepository,
+                        soundMixer = onboardingSoundMixer,
+                        hapticController = hapticController,
+                        ambientStateRepository = ambientStateRepository,
+                        onComplete = {
+                            mixerViewModel.reloadAmbientSnapshot()
+                            currentScreen = AppScreen.Mixer
+                        },
+                    )
                     AppScreen.Mixer -> MixerScreen(
                         onStartSession = { currentScreen = AppScreen.FocusSession },
                         onOpenSettings = { showSettings = true },

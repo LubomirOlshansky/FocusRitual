@@ -1,7 +1,6 @@
 package com.focusritual.app.feature.session
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -45,7 +43,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.core.designsystem.component.CloseButton
 import com.focusritual.app.core.designsystem.component.ProtectFocusSetupSheet
+import com.focusritual.app.core.designsystem.component.RitualRadioRow
 import com.focusritual.app.feature.session.ui.SessionModeToggle
+import com.focusritual.app.feature.session.ui.SessionTypeHeaderCard
 import com.focusritual.app.core.designsystem.component.StartSessionButton
 import com.focusritual.app.core.designsystem.component.StepperRow
 import com.focusritual.app.core.haptic.HapticController
@@ -60,7 +60,6 @@ import focusritual.composeapp.generated.resources.session_cycles
 import focusritual.composeapp.generated.resources.session_duration
 import focusritual.composeapp.generated.resources.session_fade_out
 import focusritual.composeapp.generated.resources.session_focus
-import focusritual.composeapp.generated.resources.session_focus_title
 import focusritual.composeapp.generated.resources.session_min_unit
 import focusritual.composeapp.generated.resources.session_preset_long
 import focusritual.composeapp.generated.resources.session_preset_medium
@@ -68,8 +67,8 @@ import focusritual.composeapp.generated.resources.session_preset_short
 import focusritual.composeapp.generated.resources.session_protect_focus_subtitle
 import focusritual.composeapp.generated.resources.session_protect_focus_title
 import focusritual.composeapp.generated.resources.session_sleep_hint
-import focusritual.composeapp.generated.resources.session_sleep_title
-import focusritual.composeapp.generated.resources.start_session
+import focusritual.composeapp.generated.resources.start_focus_session
+import focusritual.composeapp.generated.resources.start_sleep_session
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -134,25 +133,17 @@ private fun FocusSessionScreenContent(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = when (mode) {
-                        SessionMode.Focus -> stringResource(Res.string.session_focus_title).uppercase()
-                        SessionMode.Sleep -> stringResource(Res.string.session_sleep_title).uppercase()
-                    },
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 0.18.em,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-                )
                 CloseButton(onClick = { onIntent(FocusSessionIntent.Close) })
             }
 
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(12.dp))
+            SessionTypeHeaderCard(mode = mode)
+            Spacer(Modifier.height(14.dp))
             SessionModeToggle(selectedMode = mode, onModeChange = onModeChange)
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(16.dp))
 
             Box(modifier = Modifier.weight(1f)) {
                 Crossfade(
@@ -184,7 +175,10 @@ private fun FocusSessionScreenContent(
             Spacer(Modifier.height(16.dp))
             StartSessionButton(
                 onClick = { onIntent(FocusSessionIntent.StartSession) },
-                label = stringResource(Res.string.start_session).uppercase(),
+                label = stringResource(
+                    if (mode == SessionMode.Focus) Res.string.start_focus_session
+                    else Res.string.start_sleep_session,
+                ),
             )
             Spacer(Modifier.height(24.dp))
         }
@@ -226,18 +220,28 @@ private fun FocusModeContent(
     onIntent: (FocusSessionIntent) -> Unit,
     onProtectFocusClick: () -> Unit,
 ) {
-    uiState.presets.forEach { preset ->
+    uiState.presets.forEachIndexed { index, preset ->
+        if (index > 0) {
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
+            )
+        }
         val isSelected = uiState.selectedPresetId == preset.id
-        PresetRow(
+        RitualRadioRow(
             label = preset.localizedLabel(),
-            isSelected = isSelected,
+            selected = isSelected,
             onClick = { onIntent(FocusSessionIntent.SelectPreset(preset.id)) },
         )
     }
 
-    PresetRow(
+    HorizontalDivider(
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
+    )
+    RitualRadioRow(
         label = stringResource(Res.string.session_custom),
-        isSelected = uiState.isCustomSelected,
+        selected = uiState.isCustomSelected,
         onClick = { onIntent(FocusSessionIntent.SelectCustom) },
     )
 
@@ -331,15 +335,15 @@ private fun FocusModeContent(
         ) {
             Text(
                 text = stringResource(Res.string.session_protect_focus_title),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Light,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
             )
             Text(
                 text = stringResource(Res.string.session_protect_focus_subtitle),
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Light,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             )
         }
         Text(
@@ -401,64 +405,4 @@ private fun SessionPreset.localizedLabel(): String = when (id) {
     "medium" -> stringResource(Res.string.session_preset_medium)
     "long" -> stringResource(Res.string.session_preset_long)
     else -> label
-}
-
-@Composable
-private fun PresetRow(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onClick() }
-            .padding(horizontal = 2.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(11.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(17.dp)
-                .border(
-                    width = 0.5.dp,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                    },
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.80f),
-                            shape = CircleShape,
-                        ),
-                )
-            }
-        }
-        val labelColor by animateColorAsState(
-            targetValue = if (isSelected) {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.80f)
-            } else {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.48f)
-            },
-            animationSpec = tween(250),
-        )
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Light,
-            letterSpacing = (-0.01).em,
-            color = labelColor,
-        )
-    }
 }

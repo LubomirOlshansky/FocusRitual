@@ -3,7 +3,6 @@ package com.focusritual.app.feature.settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,7 +16,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -33,9 +31,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -63,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.focusritual.app.app.navigation.EdgeSwipeBackHandler
+import com.focusritual.app.core.designsystem.component.CloseButton
 import com.focusritual.app.core.designsystem.theme.FocusRitualEasing
 import com.focusritual.app.core.designsystem.theme.Spacing
 import com.focusritual.app.core.haptic.HapticController
@@ -70,12 +65,9 @@ import com.focusritual.app.core.platformaction.LocalPlatformActions
 import com.focusritual.app.feature.settings.ui.SettingsDetailContent
 import com.focusritual.app.feature.settings.ui.SettingsFrame
 import com.focusritual.app.feature.settings.ui.SettingsHome
-import focusritual.composeapp.generated.resources.Res
-import focusritual.composeapp.generated.resources.close
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsModal(
@@ -453,39 +445,7 @@ private fun SettingsModalHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Spacer(Modifier.weight(1f))
-            SettingsSheetCloseButton(onClick = onClose)
+            CloseButton(onClick = onClose)
         }
-    }
-}
-
-@Composable
-private fun SettingsSheetCloseButton(onClick: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = tween(durationMillis = 150, easing = FocusRitualEasing.DeepEaseOut),
-    )
-
-    Box(
-        modifier = Modifier
-            .size(28.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f))
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
-                shape = CircleShape,
-            )
-            .clickable(interactionSource = interactionSource, indication = null) { onClick() },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.Default.Close,
-            contentDescription = stringResource(Res.string.close),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            modifier = Modifier.size(14.dp),
-        )
     }
 }

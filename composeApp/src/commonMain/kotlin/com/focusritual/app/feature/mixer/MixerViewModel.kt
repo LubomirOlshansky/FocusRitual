@@ -40,7 +40,8 @@ class MixerViewModel(
     catalog: SoundCatalog = SoundCatalogImpl(),
     private val presetRepo: MixPresetRepository = MixPresetRepository(),
     private val ambientRepo: AmbientStateRepository = AmbientStateRepository(),
-    private val repo: MixRepository = MixRepository(catalog, ambientRepo.read()?.sounds),
+    seedDefaultsIfEmpty: Boolean = true,
+    private val repo: MixRepository = MixRepository(catalog, ambientRepo.read()?.sounds, seedDefaultsIfEmpty),
     private val orchestrator: MixAudioOrchestrator = MixAudioOrchestrator(catalog),
     private val hapticController: HapticController = HapticController(),
     private val toggleSound: ToggleSoundUseCase = ToggleSoundUseCase(repo),
@@ -129,6 +130,11 @@ class MixerViewModel(
                 ambientRepo.write(AmbientSnapshot(activeSaved, persistedPid))
             }
             .launchIn(viewModelScope)
+    }
+
+    fun reloadAmbientSnapshot() {
+        val snapshot = ambientRepo.read()?.sounds ?: return
+        repo.loadSnapshot(snapshot)
     }
 
     fun onIntent(intent: MixerIntent) {

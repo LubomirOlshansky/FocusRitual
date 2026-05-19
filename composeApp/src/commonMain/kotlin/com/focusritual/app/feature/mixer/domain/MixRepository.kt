@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 class MixRepository(
     private val catalog: SoundCatalog,
     initialSnapshot: List<SavedSound>? = null,
+    private val seedDefaultsIfEmpty: Boolean = true,
 ) {
 
     private val _state = MutableStateFlow(hydrate(initialSnapshot))
@@ -22,7 +23,7 @@ class MixRepository(
     }
 
     private fun hydrate(snapshot: List<SavedSound>?): List<SoundState> {
-        if (snapshot.isNullOrEmpty()) return seed()
+        if (snapshot.isNullOrEmpty()) return if (seedDefaultsIfEmpty) seed() else silentSeed()
         val byId = snapshot.associateBy { it.id }
         return catalog.all().map { def ->
             val saved = byId[def.id]
@@ -37,6 +38,19 @@ class MixRepository(
                 liveVolume = null,
             )
         }
+    }
+
+    private fun silentSeed(): List<SoundState> = catalog.all().map { def ->
+        SoundState(
+            id = def.id,
+            name = def.name,
+            icon = def.icon,
+            category = def.category,
+            isEnabled = false,
+            volume = 0f,
+            organicMotion = false,
+            liveVolume = null,
+        )
     }
 
     private fun seed(): List<SoundState> = catalog.all().map { def ->

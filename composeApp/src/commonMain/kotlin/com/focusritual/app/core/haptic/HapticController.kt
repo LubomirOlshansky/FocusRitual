@@ -36,6 +36,14 @@ class HapticController(
         performIfEnabled(HapticFeedbackType.LightImpact)
     }
 
+    fun onboardingAdvance() {
+        performIfEnabled(HapticFeedbackType.LightImpact)
+    }
+
+    fun onboardingComplete() {
+        performIfEnabled(HapticFeedbackType.MediumImpact)
+    }
+
     private fun performIfEnabled(type: HapticFeedbackType) {
         if (!settingsRepository.hapticsEnabled.value) return
         engine.perform(type)

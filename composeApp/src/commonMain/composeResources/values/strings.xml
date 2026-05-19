@@ -16,6 +16,8 @@
     <string name="end">End</string>
     <string name="end_sleep">End sleep</string>
     <string name="start_session">Start session</string>
+    <string name="start_focus_session">START FOCUS SESSION</string>
+    <string name="start_sleep_session">START SLEEP SESSION</string>
     <string name="start_another">Start another</string>
     <string name="load_mix">Load mix</string>
 
@@ -98,6 +100,8 @@
 
     <string name="session_focus_title">Focus Session</string>
     <string name="session_sleep_title">Sleep Session</string>
+    <string name="session_focus_subtitle">Timed work with breaks</string>
+    <string name="session_sleep_subtitle">Sounds fade out over time</string>
     <string name="session_preset_short">25 min focus · 5 min break</string>
     <string name="session_preset_medium">50 min focus · 10 min break</string>
     <string name="session_preset_long">90 min deep focus</string>

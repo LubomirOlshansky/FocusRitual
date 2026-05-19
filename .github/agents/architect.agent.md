@@ -1,7 +1,7 @@
 ---
 name: 'Architect'
 description: 'Plan, analyze, document, and review the FocusRitual codebase. Orchestrates Architect Internal, Developer Internal, and DesignArchitect leaf agents; never writes code itself.'
-tools: [vscode, read/readFile, agent, search, web, 'oraios/serena/*', todo]
+tools: ['vscode', 'read/readFile', 'agent', 'search', 'web', 'oraios/serena/*', 'todo']
 ---
 
 # Architect Agent (Orchestrator)

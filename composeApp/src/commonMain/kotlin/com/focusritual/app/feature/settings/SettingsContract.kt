@@ -10,6 +10,7 @@ data class SettingsUiState(
     val duckLevel: Float = 0.30f,
     val hapticsEnabled: Boolean = true,
     val activeDetail: SettingsDetail? = null,
+    val onboardingCompleted: Boolean = true,
 )
 
 enum class SettingsDetail {
@@ -33,6 +34,7 @@ sealed interface SettingsIntent {
     data object OpenTermsOfUse : SettingsIntent
     data object CloseDetail : SettingsIntent
     data object ResetToHome : SettingsIntent
+    data class SetOnboardingCompleted(val completed: Boolean) : SettingsIntent
 }
 
 sealed interface SettingsEffect {

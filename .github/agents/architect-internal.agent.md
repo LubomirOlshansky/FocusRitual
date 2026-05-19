@@ -1,7 +1,7 @@
 ---
 name: 'Architect Internal'
 description: 'Focused architect for executing delegated analysis, investigation, and documentation tasks on FocusRitual. Does not spawn subagents.'
-tools: [vscode, execute, read, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, 'oraios/serena/*', todo]
+tools: [vscode, execute, read, agent, edit, search, web, 'oraios/serena/*', todo]
 user-invocable: false
 ---
 

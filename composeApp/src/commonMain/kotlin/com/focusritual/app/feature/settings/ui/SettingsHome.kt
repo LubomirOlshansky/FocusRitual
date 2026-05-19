@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material.icons.outlined.GraphicEq
@@ -135,6 +136,15 @@ internal fun SettingsHome(
                 LegalGroup(
                     onPrivacy = { onIntent(SettingsIntent.OpenPrivacyPolicy) },
                     onTerms = { onIntent(SettingsIntent.OpenTermsOfUse) },
+                )
+            }
+        }
+        item {
+            SettingsSection {
+                SectionLabel("Debug")
+                DebugGroup(
+                    uiState = uiState,
+                    onIntent = onIntent,
                 )
             }
         }
@@ -405,5 +415,24 @@ private fun LegalGroup(
     SettingsGroup {
         SettingsRow(Icons.Outlined.Policy, stringResource(Res.string.settings_legal_privacy), onClick = onPrivacy)
         SettingsRow(Icons.Outlined.Gavel, stringResource(Res.string.settings_legal_terms), onClick = onTerms)
+    }
+}
+
+@Composable
+private fun DebugGroup(
+    uiState: SettingsUiState,
+    onIntent: (SettingsIntent) -> Unit,
+) {
+    SettingsGroup {
+        AudioSettingsRow(
+            icon = Icons.Outlined.BugReport,
+            label = "Show onboarding on next launch",
+            subtitle = "Relaunch app to take effect",
+            showChevron = false,
+        ) {
+            FocusSwitch(checked = !uiState.onboardingCompleted) { show ->
+                onIntent(SettingsIntent.SetOnboardingCompleted(!show))
+            }
+        }
     }
 }

@@ -53,15 +53,15 @@ fun SessionModeToggle(
             val isSelected = mode == selectedMode
             val textColor by animateColorAsState(
                 targetValue = if (isSelected) {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f)
                 } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.30f)
                 },
                 animationSpec = tween(250),
             )
             val backgroundColor by animateColorAsState(
                 targetValue = if (isSelected) {
-                    MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
                 } else {
                     Color.Transparent
                 },
@@ -95,9 +95,9 @@ fun SessionModeToggle(
             ) {
                 Text(
                     text = mode.name.uppercase(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 0.06.em,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.10.em,
                     color = textColor,
                 )
             }
